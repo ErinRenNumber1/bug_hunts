@@ -48,7 +48,7 @@ offered and the order was not placed. The spec fails by name on that outcome. Th
 agreement returning 202; spec 5 with a USD 100 product on spi-high-aov failed the same way; and
 [specs/guest-mode-spi-high-aov-control.spec.ts](specs/guest-mode-spi-high-aov-control.spec.ts), guest mode forced
 to control with an ordinary email, phone and SMS-code sign-up, failed the same way too. The failure follows the
-store, not guest mode or the amount. Both specs take `SPI_HIGH_AOV_VARIANT=<variant id>` to change the product.
+store, not guest mode or the amount. The control spec takes `SPI_HIGH_AOV_VARIANT=<variant id>` to change the product; the knob was removed from spec 5 before its World PR left draft.
 
 Each report is one `report.html` per spec. A browser dropdown at the top switches between one section per
 browser; each section embeds eight stills from that browser's Playwright screencast, the storefront checkout
@@ -127,5 +127,4 @@ that way.
   that merge or check whether John's tracked `guest-mode.spec.ts` fails in CI the same way.
 - The spi-high-aov `POST /pay/transactions/<token>/agreements` 422: follows the store. Not yet done: an Observe
   lookup of the agreements call for shop 59271905336, and asking John or Nabeel when bug hunt case 4 last passed.
-- World PR https://github.com/shop/world/pull/1022614 (spec 5) is a draft. Remove the `SPI_HIGH_AOV_VARIANT`
-  knob before marking it ready.
+- World PR https://github.com/shop/world/pull/1022614 (spec 5): variant knob removed on 2026-09-30, ready for review.

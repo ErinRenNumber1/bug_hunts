@@ -16,9 +16,8 @@ import {TIMINGS} from '../shop-pay-external/timings';
 
 const SHOP_PAY_CHECKOUT_HOSTNAMES = new Set(['shop.app', 'pay.shopify.com']);
 const BENCHMARK_OTP = '000000';
-// product-with-unit-price USD 350 by default (what the bug hunt used). SPI_HIGH_AOV_VARIANT=68589829914646
-// swaps in product-with-variants Medium, USD 100, to test whether the agreement failure is amount-bound.
-const SPI_VARIANT = process.env.SPI_HIGH_AOV_VARIANT ?? '55322433454221';
+// product-with-unit-price, USD 350, the product the bug hunt used (products.json).
+const SPI_VARIANT = '55322433454221';
 // installments_condition_shipping_address with the US adjective (generated/translations/en.json).
 const ADDRESS_BANNER = /Installments can only be used to ship to a valid US address/i;
 const REMEMBER_ME_REQUEST = /shopify_pay\/.+\/remember_me/;
