@@ -12,17 +12,17 @@ in Pay checkout, with no phone entry and no SMS code.
 | 1 | shoppaye2etesting | checkout-web `guest-mode.spec.ts` (tracked in World, not copied here) | passed | [runs/spec-run-1/report.html](runs/spec-run-1/report.html) |
 | 2 | lucasmrichtest | [specs/guest-mode-lucasmrichtest.spec.ts](specs/guest-mode-lucasmrichtest.spec.ts) | passed, 19.9s | [runs/spec-run-2/report.html](runs/spec-run-2/report.html) |
 | 3 | lucasmrichtest | [specs/guest-mode-lucasmrichtest-reload.spec.ts](specs/guest-mode-lucasmrichtest-reload.spec.ts) | passed, 22.0s | [runs/spec-run-3/report.html](runs/spec-run-3/report.html) |
-| 4 | lucasmrichtest, then reinis-test-store | [specs/guest-mode-lucasmrichtest-account-signin.spec.ts](specs/guest-mode-lucasmrichtest-account-signin.spec.ts) | failed on two soft expectations, 83.3s (attempt 5) | [runs/spec-run-4/report.html](runs/spec-run-4/report.html) |
+| 4 | lucasmrichtest, then reinis-test-store | [specs/guest-mode-lucasmrichtest-account-signin.spec.ts](specs/guest-mode-lucasmrichtest-account-signin.spec.ts) | passed, 38.1s (attempt 7; attempts 4 to 6 recorded the same behaviour as soft failures) | [runs/spec-run-4/report.html](runs/spec-run-4/report.html) |
 
 Run 3 reloads the page after landing in Pay checkout and asserts the buyer is still on `/shoppay`, on the
 same host, with the same email in the header, then completes the order. That proves the guest session is
 cookie and server backed rather than client handoff state.
 
 Run 4 takes the guest-mode buyer from run 3 to a second store. Signing in to reinis-test-store's customer
-account through Sign in with Shop asked for an email code and then an SMS code to the part A shipping phone,
-which had never been verified. After that sign-in, a cart permalink on reinis-test-store went straight into
-Shop Pay checkout with the address and card vaulted and no verification at all. The spec expected email code
-only at sign-in and phone verification at Shop Pay, so it records both as soft failures and still finishes.
+account through Sign in with Shop asks for an email code and then an SMS code to the part A shipping phone,
+which had not been verified before. After that sign-in, a cart permalink on reinis-test-store goes straight
+into Shop Pay checkout with the address and card vaulted and no further verification. Erin confirmed on
+2026-09-30 that both are the intended behaviour, so the spec asserts them as hard expectations.
 
 Each report embeds eight stills from the Playwright screencast, the storefront checkout token, the
 checkout session identifier, and the `x-request-id` of every key request, with the email-submit request

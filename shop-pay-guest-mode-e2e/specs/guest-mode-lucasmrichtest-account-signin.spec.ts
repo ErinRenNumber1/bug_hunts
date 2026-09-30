@@ -1,14 +1,15 @@
 // Spec 4: three parts in one browser, one buyer.
 //   A. Spec 3 in full on lucasmrichtest: guest-mode email, land in Pay checkout, reload, complete the
-//      order. This creates a fresh email-only, unverified Shop account with no phone.
+//      order. This creates a fresh email-only, unverified Shop account whose only phone is the
+//      shipping-address phone typed at checkout, never verified.
 //   B. Same browser opens reinis-test-store's customer account sign-in (new customer accounts, Sign in
-//      with Shop). Expected: email code only, no phone, then signed in on the account page.
-//      Observed in run 4: Shop also asked for a code at the part A shipping phone (step B3b, soft failure).
-//   C. Same browser starts a checkout on reinis-test-store and opens Shop Pay. Expected: the buyer has
-//      to verify by phone (enter a phone, then an SMS code), not by email, before reaching Pay checkout.
+//      with Shop). Expected: an email code, then a code sent to the part A phone, then signed in on the
+//      account page. Confirmed as the intended behaviour on 2026-09-30 after runs 4 to 6 showed it.
+//   C. Same browser opens a cart permalink on reinis-test-store. Expected: with the phone verified in
+//      part B, the buyer goes straight into Pay checkout with the part A address and card vaulted, and no
+//      further email, phone or SMS step.
 // Untracked, local only. The guest-mode override header applies to every request in this context,
-// including part C; an existing buyer with an order is outside the experiment's gates, so it should
-// not change part C, but keep that in mind if part C lands in Pay checkout without a phone step.
+// including parts B and C.
 import {expect, type Frame, type Locator, type Page} from '@playwright/test';
 
 import {defaultAddress} from '../../../constants/address';
@@ -69,7 +70,7 @@ test.describe('[Shop Pay] Guest mode on lucasmrichtest, then reinis-test-store a
     experimentOverrides: {[SHOP_PAY_GUEST_MODE_EXPERIMENT]: 'treatment'},
   });
 
-  test('guest-mode buyer: email code at customer account sign-in, phone and SMS code at Shop Pay checkout', async ({
+  test('guest-mode buyer: email then phone code at customer account sign-in, straight into Pay checkout on that store', async ({
     navigator,
     informationPage,
     shopPayOnePage,
@@ -113,7 +114,7 @@ test.describe('[Shop Pay] Guest mode on lucasmrichtest, then reinis-test-store a
       await expect(thankYouPage.orderCompletedWithShopPayMessage).toBeVisible();
     });
 
-    // ---------- Part B: customer account sign-in, email code only ----------
+    // ---------- Part B: customer account sign-in, email code then phone code ----------
     const onAccountPage = (url: URL) =>
       url.hostname === 'shopify.com' &&
       url.pathname.startsWith(`/${ACCOUNT_SHOP_ID}/account`) &&
@@ -161,7 +162,7 @@ test.describe('[Shop Pay] Guest mode on lucasmrichtest, then reinis-test-store a
       await popup.getByRole('button', {name: /^continue$/i}).first().click();
     });
 
-    await test.step('B3. Expect an email code prompt (no phone), enter the benchmark code', async () => {
+    await test.step('B3. Email code first (no phone number entry), enter the benchmark code', async () => {
       // An unverified session must not be enough on its own (bug hunt case 15). If the account page
       // shows up before any code was asked for, fail with a message that says so.
       if (onAccountPage(new URL(page.url()))) {
@@ -186,16 +187,14 @@ test.describe('[Shop Pay] Guest mode on lucasmrichtest, then reinis-test-store a
       if (await submit.isVisible().catch(() => false)) await submit.click().catch(() => {});
     });
 
-    await test.step('B3b. Deviation check: a phone code after the email code', async () => {
-      // Run 4 (2026-09-30): after the email code, the Shop window showed "Verify your phone, Enter code
-      // sent to +1 ••• ••• •249", the shipping-address phone typed in part A, which was never verified.
-      // The expectation for this spec is email code only, so record that as a soft failure, then enter
-      // the benchmark code so the run can still reach part C and show what Shop Pay asks for there.
+    await test.step('B3b. Phone code sent to the part A phone; enter the benchmark code', async () => {
+      // Runs 4 to 6 (2026-09-30): after the email code, the Shop window shows "Verify your phone, Enter
+      // code sent to +1 ••• ••• •NNN", the shipping-address phone typed in part A, which was never
+      // verified. Erin confirmed this is the intended behaviour, so it is now a hard expectation.
       const root = popup ?? page;
-      const phoneStep = root.getByText(/verify your phone/i).first();
-      const phoneShown = await phoneStep.waitFor({state: 'visible', timeout: 8_000}).then(() => true).catch(() => false);
-      expect.soft(phoneShown, 'Expected email code only at customer account sign-in, but Shop asked for a phone code too').toBe(false);
-      if (!phoneShown) return;
+      await expect(root.getByText(/verify your phone/i).first(), 'Expected a phone code step after the email code').toBeVisible({
+        timeout: 15_000,
+      });
       await test.info().attach('popup-phone-step', {body: await root.screenshot(), contentType: 'image/png'});
       const phoneCode = root.getByRole('textbox', {name: /verify your phone|code/i}).or(root.locator('input[autocomplete="one-time-code"]')).first();
       await phoneCode.waitFor({state: 'visible', timeout: 10_000});
@@ -227,64 +226,30 @@ test.describe('[Shop Pay] Guest mode on lucasmrichtest, then reinis-test-store a
       ).toBeVisible({timeout: 30_000});
     });
 
-    // ---------- Part C: Shop Pay checkout on reinis-test-store, phone + SMS expected ----------
-    // Run 4 (attempt 5): with the buyer signed in to the customer account, the cart permalink never
-    // reached a merchant checkout URL. It went /cart -> shopify.com/authentication/.../oauth/authorize
+    // ---------- Part C: cart permalink on reinis-test-store goes straight into Pay checkout ----------
+    // Runs 4 to 6: with the buyer signed in to the customer account, /cart/<variant>:1 never reaches a
+    // merchant checkout page. It goes /cart -> shopify.com/authentication/.../oauth/authorize (silent)
     // -> /customer_authentication/callback -> /cart?shop_sign_in=true -> shop.app/pay/session/
-    // create_and_redirect -> shop.app/checkout/<shop>/cn/<token>/en-ca/shoppay, i.e. straight into
-    // Pay checkout with no Shop Pay button, no email and no phone verification. So C1 now accepts
-    // either landing, and C3 records a missing phone step as a soft failure instead of stopping.
+    // create_and_redirect -> shop.app/checkout/<shop>/cn/<token>/en-ca/shoppay. Erin confirmed this is
+    // the intended behaviour: the phone was verified in part B, so Shop Pay has nothing left to ask.
     const isPayCheckoutUrl = (url: URL) => SHOP_PAY_CHECKOUT_HOSTNAMES.has(url.hostname) && url.pathname.endsWith('/shoppay');
-    let landedDirectlyInPayCheckout = false;
 
-    await test.step('C1. Start a checkout on reinis-test-store and open Shop Pay', async () => {
+    await test.step('C1. Cart permalink on reinis-test-store lands directly in Pay checkout', async () => {
       await page.goto(`${ACCOUNT_STORE}/cart/${ACCOUNT_STORE_VARIANT_ID}:1`, {waitUntil: 'domcontentloaded'});
       await page.waitForURL((url) => url.pathname.includes('/checkouts/') || isPayCheckoutUrl(url), {timeout: 45_000});
-      landedDirectlyInPayCheckout = isPayCheckoutUrl(new URL(page.url()));
       await test.info().attach('reinis-cart-permalink-landing', {body: await page.screenshot(), contentType: 'image/png'});
-      if (landedDirectlyInPayCheckout) return;
-      await informationPage.locator.expressCheckout.wallets.shopPay.click();
+      expect(isPayCheckoutUrl(new URL(page.url())), `Expected Pay checkout, got a merchant checkout page: ${page.url()}`).toBe(true);
     });
 
-    await test.step('C2. Submit the email if Shop Pay asks for it again', async () => {
-      if (landedDirectlyInPayCheckout) return;
-      const login = shopPayOnePage.locator.shopPayLogin;
-      const emailVisible = await login.fields.email
-        .waitFor({state: 'visible', timeout: 15_000})
-        .then(() => true)
-        .catch(() => false);
-      if (emailVisible) await login.submitEmail(email);
-    });
-
-    await test.step('C3. Expect phone verification, not an email code; enter phone and SMS code', async () => {
-      expect
-        .soft(landedDirectlyInPayCheckout, 'Expected Shop Pay to ask for phone verification, but the cart permalink landed directly in Pay checkout')
-        .toBe(false);
-      if (landedDirectlyInPayCheckout) return;
-
-      const login = shopPayOnePage.locator.shopPayLogin;
-      // Email-only buyer with no stored phone: the expected screen is phone entry, followed by an
-      // SMS code. "Confirm it's you" would mean a stored phone was found. Either counts as phone
-      // verification; a "confirm your email" screen fails the step.
-      const phoneStep = login.fields.phone.or(login.phoneVerificationStep).first();
-      const phoneShown = await phoneStep.waitFor({state: 'visible', timeout: 30_000}).then(() => true).catch(() => false);
-      expect.soft(phoneShown, 'Expected Shop Pay to ask for phone verification for this buyer').toBe(true);
-      await test.info().attach('reinis-shop-pay-login-step', {body: await page.screenshot(), contentType: 'image/png'});
-      if (!phoneShown) return;
-      await expect(login.emailVerificationStep, 'Did not expect an email code at Shop Pay checkout').toHaveCount(0);
-
-      if (await login.fields.phone.isVisible()) {
-        await login.fields.phone.pressSequentially(phone, {delay: 100});
-        // Same locator as the region's private continueButton, inside the Quick Checkout iframe.
-        await page.getByTitle('Shop Pay Quick Checkout').contentFrame().getByRole('button', {name: /continue/i}).click();
-      }
-      await login.enterOtp(BENCHMARK_OTP);
-    });
-
-    await test.step('C4. Lands in Pay checkout on reinis-test-store with the same email', async () => {
-      await page.waitForURL(isPayCheckoutUrl, {timeout: 45_000});
+    await test.step('C2. Pay checkout is vaulted for the same email, with no email, phone or SMS step', async () => {
       await shopPayOnePage.waitForCheckoutHydrated();
+      const login = shopPayOnePage.locator.shopPayLogin;
+      await expect(login.fields.email, 'Did not expect an email field at Pay checkout').toHaveCount(0);
+      await expect(login.fields.phone, 'Did not expect a phone field at Pay checkout').toHaveCount(0);
+      await expect(login.emailVerificationStep, 'Did not expect an email code at Pay checkout').toHaveCount(0);
+      await expect(login.phoneVerificationStep, 'Did not expect a phone code at Pay checkout').toHaveCount(0);
       await expect(shopPayOnePage.locator.vaultedContact.emailMatching(email)).toBeVisible();
+      await expect(page.getByRole('button', {name: /pay now/i}), 'Expected the vaulted Pay now button').toBeVisible({timeout: 30_000});
       await test.info().attach('reinis-pay-checkout', {body: await page.screenshot(), contentType: 'image/png'});
     });
   });
