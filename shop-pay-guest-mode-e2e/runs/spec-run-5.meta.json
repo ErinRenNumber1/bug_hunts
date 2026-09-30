@@ -1,0 +1,77 @@
+{
+  "title": "Installments After Guest Mode",
+  "h1": "Guest-mode buyer on spi-high-aov: no premature address banner, SMS code at underwriting, Affirm agreement fails",
+  "subtitle": "Frames from the Playwright trace of spec 5, attempt 2, run from Erin's machine against production on 2026-09-30. Bug hunt doc case 4 (\"New buyer — Installments\") on the store the bug hunt used, USD 350 product. Frames are unedited screencast stills of the main window, or test screenshots taken by the spec where marked.",
+  "spec": "e2e/tests/shop-pay-installments/guest-mode-spi-high-aov.spec.ts:41 (untracked)",
+  "store": "spi-high-aov.myshopify.com · shop 59271905336 · product-with-unit-price USD 350 (variant 55322433454221)",
+  "override": "EXP_OVERRIDES e_ac6fae2281b0e908985ecf9c8069ba5d=treatment (header sent for the whole run)",
+  "moments": [
+    {
+      "t": 7.0,
+      "name": "pay-checkout-landed",
+      "title": "A1. Guest mode: straight into Pay checkout",
+      "body": "Benchmark alias {email} submitted at the Shop Pay sign-in; no phone field and no SMS step. The spec asserts the phone input and the phone verification step have zero matches."
+    },
+    {
+      "attachment": "empty-form-no-banner",
+      "t": 0,
+      "name": "empty-form-no-banner",
+      "title": "A2. Empty shipping form, no Installments banner",
+      "body": "Pay in installments is listed and enabled while the shipping form holds only region defaults. The spec asserts the text \"Installments can only be used to ship to a valid US address\" has zero matches. This is the behaviour PR 1021476 (merged 2026-09-23) introduced."
+    },
+    {
+      "attachment": "address-filled-no-banner",
+      "t": 0,
+      "name": "address-filled-no-banner",
+      "title": "A4. US address and phone filled, still no banner",
+      "body": "61 W Houston St, New York, with shipping phone 773555xxxx typed into the address form. Banner still absent and the Installments option still enabled."
+    },
+    {
+      "attachment": "installments-selected",
+      "t": 0,
+      "name": "installments-selected",
+      "title": "A5. Pay in installments selected, card added",
+      "body": "The card form is filled with a test Shopify Payments card and the primary button changes to continue to payment plans."
+    },
+    {
+      "attachment": "installments-phone-otp",
+      "t": 0,
+      "name": "installments-phone-otp",
+      "key": true,
+      "title": "A6. Underwriting asks for an SMS code",
+      "body": "Clicking continue sends POST /pay/verifications (201) and the Installments modal asks for the code sent to the shipping phone, the phone guest mode skipped in A1. The spec enters the benchmark code."
+    },
+    {
+      "attachment": "affirm-identity-done",
+      "t": 0,
+      "name": "affirm-identity-done",
+      "title": "A7. Affirm identity verification",
+      "body": "The Affirm iframe shows \"Verify your information\" with the A3 address and a date of birth. PATCH /pay/session and POST /pay/installments/opt_in both return 200 (opt_in: success, eligibility true, income verification provided)."
+    },
+    {
+      "attachment": "installments-unavailable",
+      "t": 0,
+      "name": "installments-unavailable",
+      "key": true,
+      "title": "A7. Agreement fails: \"We're experiencing technical issues\"",
+      "body": "POST /pay/transactions/{{checkout_token}}/agreements returns 422 with body {{\"errors\":[{{\"error\":\"checkout_error\"}}],\"error_classification\":{{\"error_type\":\"unknown\",\"retry_eligible\":false,\"failure_stage\":\"api_response\"}}}}. The iframe replaces the plan step with \"Installments aren't available at this time. Try again later, or pay in full to complete your purchase.\" and a Return to checkout button. No payment plan is offered and the order is not placed."
+    },
+    {
+      "t": 21.5,
+      "name": "run-end",
+      "title": "End of run",
+      "body": "The spec stops here by design: it waits for either the Affirm Complete purchase button or the technical-issues text and fails by name with the recorded agreement response. Attempt 1 (14:23Z) reached the same 422 on checkout token b0d14f3ae08c59177372f92114210a1c, so this is reproducible on this store today."
+    }
+  ],
+  "proves": [
+    "On spi-high-aov, a guest-mode buyer sees no Installments address banner on an empty shipping form, nor after entering a valid US address. The 2026-09-23 fix (PR 1021476) holds under guest mode.",
+    "Installments underwriting asks for an SMS code to the shipping phone, so the phone verification guest mode skips is recovered before any payment plan is offered.",
+    "After identity verification, the Affirm agreement request fails with 422 checkout_error on both attempts today (14:23Z and 14:39Z), and the buyer is told to pay in full. Case 4's expected outcome, \"the order completes\", was not reached."
+  ],
+  "caveats": [
+    "The 422 body is shop-server's generic wrapper for a non-2xx from the upstream agreements API (engines/pay/app/services/pay/installments/agreements_api.rb, handle_response). The trace has no upstream detail; the server logs an agreements_call debug event with the upstream HTTP status.",
+    "Not yet separated: whether this is the store, the USD 350 amount, the benchmark test identity, or Affirm being unavailable for everyone at that time. John's tracked spec on spi-e2e-testing and a USD 100 run on this store are the next two checks.",
+    "The bug hunt doc records case 4 as passed by John and Nabeel. Their runs were manual and may not have used the benchmark identity.",
+    "Full run {duration} s. Store is not on the e2e pod, so this spec stays local. Benchmark identity: simulated SMS; one browser, one run per attempt."
+  ]
+}

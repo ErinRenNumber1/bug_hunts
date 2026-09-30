@@ -13,6 +13,7 @@ in Pay checkout, with no phone entry and no SMS code.
 | 2 | lucasmrichtest | [specs/guest-mode-lucasmrichtest.spec.ts](specs/guest-mode-lucasmrichtest.spec.ts) | passed, 19.9s | [runs/spec-run-2/report.html](runs/spec-run-2/report.html) |
 | 3 | lucasmrichtest | [specs/guest-mode-lucasmrichtest-reload.spec.ts](specs/guest-mode-lucasmrichtest-reload.spec.ts) | passed, 22.0s | [runs/spec-run-3/report.html](runs/spec-run-3/report.html) |
 | 4 | lucasmrichtest, then reinis-test-store | [specs/guest-mode-lucasmrichtest-account-signin.spec.ts](specs/guest-mode-lucasmrichtest-account-signin.spec.ts) | passed, 38.9s (attempt 8; attempts 4 to 6 recorded the same behaviour as soft failures) | [runs/spec-run-4/report.html](runs/spec-run-4/report.html) |
+| 5 | spi-high-aov | [specs/guest-mode-spi-high-aov.spec.ts](specs/guest-mode-spi-high-aov.spec.ts) | failed, 21.6s (attempt 2; attempt 1 failed the same way) | [runs/spec-run-5/report.html](runs/spec-run-5/report.html) |
 
 Run 3 reloads the page after landing in Pay checkout and asserts the buyer is still on `/shoppay`, on the
 same host, with the same email in the header, then completes the order. That proves the guest session is
@@ -24,6 +25,15 @@ which had not been verified before. After that sign-in, a cart permalink on rein
 into Shop Pay checkout with the address and card vaulted and no further verification. Erin confirmed on
 2026-09-30 that both are the intended behaviour, so the spec asserts them as hard expectations.
 
+Run 5 is bug hunt doc case 4, "New buyer — Installments", on the store the bug hunt used (USD 350 product). The
+guest-mode buyer sees no Installments address banner on the empty shipping form or after a valid US address,
+and Installments underwriting asks for an SMS code to the shipping phone that guest mode skipped. After Affirm
+identity verification, `POST /pay/transactions/<token>/agreements` returned 422 `checkout_error` on both
+attempts on 2026-09-30 and the iframe showed "We're experiencing technical issues", so no payment plan was
+offered and the order was not placed. The spec fails by name on that outcome. Whether it is the store, the
+amount, the benchmark identity or Affirm availability at the time is not yet separated; the spec takes
+`SPI_HIGH_AOV_VARIANT=68589829914646` to rerun with a USD 100 product.
+
 Each report embeds eight stills from the Playwright screencast, the storefront checkout token, the
 checkout session identifier, and the `x-request-id` of every key request, with the email-submit request
 that carried `X-Verdict-Overrides-Applied` highlighted.
@@ -31,7 +41,8 @@ that carried `X-Verdict-Overrides-Applied` highlighted.
 ## Running a spec
 
 The specs import checkout-web helpers and are not runnable standalone. Copy one into
-`areas/clients/checkout-web/e2e/tests/shop-pay/shared/` in World and run from `areas/clients/checkout-web`:
+`areas/clients/checkout-web/e2e/tests/shop-pay/shared/` in World (spec 5 goes under
+`e2e/tests/shop-pay-installments/` and runs with `--project shop-pay-installments`) and run from `areas/clients/checkout-web`:
 
 ```
 npx playwright test e2e/tests/shop-pay/shared/guest-mode-lucasmrichtest-reload.spec.ts \
