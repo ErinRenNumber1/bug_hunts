@@ -5,8 +5,8 @@
 #
 #   <run>     1..5 or control (see SPECS below)
 #   browser   any project name from playwright.guest-mode.config.ts:
-#             chromium webkit firefox iphone-15 pixel-7 chrome msedge
-#             default: chromium webkit firefox
+#             chromium webkit firefox chrome
+#             default: all four
 #
 # Reports land in runs/spec-run-<run>-<browser>/report.html. Launches real browsers against
 # production, so Erin runs it herself. The copied trace.zip stays gitignored.
@@ -28,7 +28,7 @@ declare -A SPECS=(
 RUN="${1:?usage: run-browsers.sh <run> [browser ...]}"; shift
 SPEC="${SPECS[$RUN]:?unknown run '$RUN' (1..5 or control)}"
 META="$HUNT/runs/spec-run-$RUN.meta.json"
-BROWSERS=("$@"); [ ${#BROWSERS[@]} -eq 0 ] && BROWSERS=(chromium webkit firefox)
+BROWSERS=("$@"); [ ${#BROWSERS[@]} -eq 0 ] && BROWSERS=(chromium webkit firefox chrome)
 [ -f "$META" ] || { echo "missing $META"; exit 1; }
 [ -f "$CW/$CONFIG" ] || cp "$HUNT/tools/$CONFIG" "$CW/$CONFIG"
 

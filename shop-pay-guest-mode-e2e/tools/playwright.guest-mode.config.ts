@@ -23,16 +23,12 @@ type DeviceName = keyof typeof devices;
 const UA_SUFFIX = 'Playwright-checkout-e2e-tests/local';
 
 const BROWSERS: Record<string, {device: DeviceName; channel?: string}> = {
-  // Playwright-bundled engines (npx playwright install chromium|webkit|firefox)
+  // Playwright-bundled engines (npx playwright install chromium webkit firefox)
   chromium: {device: 'Desktop Chrome'},
   webkit: {device: 'Desktop Safari'},
   firefox: {device: 'Desktop Firefox'},
-  // Mobile profiles: emulated viewport, touch and user agent on the bundled engines
-  'iphone-15': {device: 'iPhone 15'},
-  'pixel-7': {device: 'Pixel 7'},
-  // Branded browsers installed on this Mac (channel), not Playwright's build
+  // Google Chrome installed on this Mac (channel), not Playwright's Chromium build
   chrome: {device: 'Desktop Chrome', channel: 'chrome'},
-  msedge: {device: 'Desktop Edge', channel: 'msedge'},
 };
 
 const config = {
