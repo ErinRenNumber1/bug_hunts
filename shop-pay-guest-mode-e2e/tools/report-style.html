@@ -41,4 +41,13 @@ table.reqs td b{font-weight:600}table.reqs td i{color:var(--muted);font-style:no
 table.reqs tr.hl td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 p.fine{margin:0;color:var(--muted);font-size:13px;max-width:80ch}
 table.reqs tr.nav td{font-style:italic;color:var(--muted,#777)}
+.switch{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.switch label{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)}
+.switch select{font:inherit;font-family:var(--mono);font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.switch select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.switch .fine{font-size:13px;color:var(--muted)}
+section.browser{display:grid;gap:28px}
+p.sub{margin:0;color:var(--muted);max-width:65ch}
+table.summary{min-width:0}table.summary td.pass{color:var(--pass);font-weight:600}table.summary td.fail{color:var(--warn);font-weight:600}
+table.summary a{color:var(--accent);text-decoration:none}table.summary a:hover{text-decoration:underline}
 </style>

@@ -10,19 +10,24 @@
       "t": 8.6,
       "name": "pay-checkout-landed",
       "title": "A. Guest mode: straight into Pay checkout",
-      "body": "Benchmark alias {email} submitted at the Shop Pay sign-in, no phone step. Shipping phone 4385559156 is typed into the address form later; it is never verified in part A."
+      "body": "Benchmark alias {email} submitted at the Shop Pay sign-in, no phone step. Shipping phone 4385559156 is typed into the address form later; it is never verified in part A.",
+      "request": "POST 200 server\\.shop\\.app/accounts/authentication/graphql",
+      "offset": 1.5
     },
     {
       "t": 23.2,
       "name": "order-confirmed",
       "title": "A. Order confirmed on lucasmrichtest",
-      "body": "Thank-you page, confirmation {order}. The buyer now has a guest-mode Shop account with an unverified phone on the shipping address."
+      "body": "Thank-you page, confirmation {order}. The buyer now has a guest-mode Shop account with an unverified phone on the shipping address.",
+      "request": "GET 200 .*/checkouts/cn/.*/processing",
+      "offset": 1.5
     },
     {
       "t": 25.8,
       "name": "account-login-page",
       "title": "B. reinis-test-store customer account sign-in",
-      "body": "/account/login redirects through Sign in with Shop to shopify.com/authentication/8013840406/login. The spec clicks Continue with Shop, which opens a popup at shop.app/accounts/login with authentication_level=email."
+      "body": "/account/login redirects through Sign in with Shop to shopify.com/authentication/8013840406/login. The spec clicks Continue with Shop, which opens a popup at shop.app/accounts/login with authentication_level=email.",
+      "step": "B1"
     },
     {
       "name": "email-code",
@@ -44,7 +49,8 @@
       "name": "signed-in",
       "title": "B. Signed in to the customer account",
       "key": true,
-      "body": "Popup closed by itself through shop.app/pay/session/create_and_redirect and /customer_authentication/sso_hint. URL is shopify.com/8013840406/account with the Orders heading."
+      "body": "Popup closed by itself through shop.app/pay/session/create_and_redirect and /customer_authentication/sso_hint. URL is shopify.com/8013840406/account with the Orders heading.",
+      "step": "B4"
     },
     {
       "t": 37.4,

@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Re-run one guest-mode evidence spec on several browsers and build one report.html per browser.
+# Re-run guest-mode evidence specs on several browsers and build one report.html per spec,
+# with a browser dropdown inside the report.
 #
-#   tools/run-browsers.sh <run> [browser ...]
+#   tools/run-browsers.sh <run|all> [browser ...]
 #
-#   <run>     1..5 or control (see SPECS below)
-#   browser   any project name from playwright.guest-mode.config.ts:
-#             chromium webkit firefox chrome
+#   <run>     1..5 or control (see SPECS below); all = every one of them in order
+#   browser   project names from playwright.guest-mode.config.ts: chromium webkit firefox chrome
 #             default: all four
 #
-# Reports land in runs/spec-run-<run>-<browser>/report.html. Launches real browsers against
-# production, so Erin runs it herself. The copied trace.zip stays gitignored.
+# Reports land in runs/spec-run-<run>/report.html. Launches real browsers against production,
+# so Erin runs it herself. Copied traces go to runs/spec-run-<run>/traces/ and stay gitignored.
 set -euo pipefail
 
 HUNT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -24,25 +24,19 @@ declare -A SPECS=(
   [5]=e2e/tests/shop-pay-installments/guest-mode-spi-high-aov.spec.ts
   [control]=e2e/tests/shop-pay-installments/guest-mode-spi-high-aov-control.spec.ts
 )
+ORDER=(1 2 3 4 5 control)
 
-RUN="${1:?usage: run-browsers.sh <run> [browser ...]}"; shift
-SPEC="${SPECS[$RUN]:?unknown run '$RUN' (1..5 or control)}"
-META="$HUNT/runs/spec-run-$RUN.meta.json"
+WHICH="${1:?usage: run-browsers.sh <run|all> [browser ...]}"; shift
+if [ "$WHICH" = all ]; then RUNS=("${ORDER[@]}"); else RUNS=("$WHICH"); fi
 BROWSERS=("$@"); [ ${#BROWSERS[@]} -eq 0 ] && BROWSERS=(chromium webkit firefox chrome)
-[ -f "$META" ] || { echo "missing $META"; exit 1; }
+for RUN in "${RUNS[@]}"; do
+  : "${SPECS[$RUN]:?unknown run '$RUN' (1..5, control, or all)}"
+  [ -f "$HUNT/runs/spec-run-$RUN.meta.json" ] || { echo "missing runs/spec-run-$RUN.meta.json"; exit 1; }
+done
 [ -f "$CW/$CONFIG" ] || cp "$HUNT/tools/$CONFIG" "$CW/$CONFIG"
 
-cd "$CW"
-JSON="test-results/guest-mode-run-$RUN.json"
-ARGS=(); for b in "${BROWSERS[@]}"; do ARGS+=(--project "$b"); done
-echo "--- playwright: $SPEC on ${BROWSERS[*]}"
-PW_JSON_OUT="$JSON" npx playwright test --config "$CONFIG" "$SPEC" "${ARGS[@]}" || true
-
-echo "--- reports"
-for b in "${BROWSERS[@]}"; do
-  trace=$(ls -t test-results/*-"$b"/trace.zip 2>/dev/null | head -1 || true)
-  if [ -z "$trace" ]; then echo "$b: no trace.zip (browser not installed, or the run never started)"; continue; fi
-  status=$(python3 - "$JSON" "$b" <<'PY'
+status_of() {  # <json> <project> -> passed|failed from the Playwright JSON reporter
+  python3 - "$1" "$2" <<'PY'
 import json, sys
 report, project = json.load(open(sys.argv[1])), sys.argv[2]
 def walk(suite):
@@ -53,8 +47,27 @@ def walk(suite):
 statuses = [s for top in report.get('suites', []) for s in walk(top)]
 print('passed' if statuses and all(s in ('expected', 'flaky') for s in statuses) else 'failed')
 PY
-)
-  python3 "$HUNT/tools/make-report.py" --run "spec-run-$RUN-$b" --meta "$META" --trace "$trace" --status "$status" --browser "$b" >/dev/null
-  echo "$b: $status -> $HUNT/runs/spec-run-$RUN-$b/report.html"
+}
+
+cd "$CW"
+SUMMARY=()
+for RUN in "${RUNS[@]}"; do
+  SPEC="${SPECS[$RUN]}"; META="$HUNT/runs/spec-run-$RUN.meta.json"
+  JSON="test-results/guest-mode-run-$RUN.json"
+  ARGS=(); for b in "${BROWSERS[@]}"; do ARGS+=(--project "$b"); done
+  echo "--- run $RUN: $SPEC on ${BROWSERS[*]}"
+  PW_JSON_OUT="$JSON" npx playwright test --config "$CONFIG" "$SPEC" "${ARGS[@]}" || true
+
+  REPORT_ARGS=(); LINE="run $RUN:"
+  for b in "${BROWSERS[@]}"; do
+    trace=$(ls -t test-results/*-"$b"/trace.zip 2>/dev/null | head -1 || true)
+    if [ -z "$trace" ]; then echo "$b: no trace.zip (browser not installed, or the run never started)"; LINE+=" $b=missing"; continue; fi
+    status=$(status_of "$JSON" "$b")
+    REPORT_ARGS+=(--trace "$b=$trace" --status "$b=$status"); LINE+=" $b=$status"
+  done
+  if [ ${#REPORT_ARGS[@]} -eq 0 ]; then echo "run $RUN: nothing to report"; SUMMARY+=("$LINE"); continue; fi
+  python3 "$HUNT/tools/make-report.py" --run "spec-run-$RUN" --meta "$META" "${REPORT_ARGS[@]}" | grep -v '^[] {"]' || true
+  SUMMARY+=("$LINE -> $HUNT/runs/spec-run-$RUN/report.html")
 done
-echo "--- playwright html report: (cd $CW && npx playwright show-report)"
+echo '--- summary'
+printf '%s\n' "${SUMMARY[@]}"
