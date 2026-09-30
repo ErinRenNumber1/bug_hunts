@@ -1,0 +1,71 @@
+{
+  "title": "Guest Mode Reload Survives",
+  "h1": "Shop Pay guest mode on lucasmrichtest, reload after landing in Pay checkout",
+  "subtitle": "Frames from the Playwright trace of spec 3, run from Erin's machine against production on 2026-09-29. Spec 2 plus a full page reload once the buyer is in Pay checkout. Each frame is an unedited screencast still.",
+  "spec": "e2e/tests/shop-pay/shared/guest-mode-lucasmrichtest-reload.spec.ts:28 (untracked)",
+  "store": "lucasmrichtest.myshopify.com \u00b7 shop 60529737962 \u00b7 primary domain polly-lucas.myshopify.com",
+  "override": "EXP_OVERRIDES e_ac6fae2281b0e908985ecf9c8069ba5d=treatment",
+  "moments": [
+    {
+      "t": 2.5,
+      "name": "checkout-landing",
+      "title": "Checkout opens",
+      "body": "Cart permalink on lucasmrichtest.myshopify.com, one Snake Plant Laurentii at CAD 59."
+    },
+    {
+      "t": 5.2,
+      "name": "shop-pay-clicked",
+      "title": "Shop Pay button clicked",
+      "body": "The express-checkout Shop Pay button opens the Accounts sign-in iframe."
+    },
+    {
+      "t": 6.1,
+      "name": "email-submitted",
+      "title": "Email submitted",
+      "body": "Benchmark alias {email}, then Continue. The treatment decision is made here."
+    },
+    {
+      "t": 7.8,
+      "name": "pay-checkout-landed",
+      "title": "Guest mode: straight into Pay checkout",
+      "body": "No phone entry, no SMS code. Buyer email in the header, empty Canada shipping form.",
+      "key": true
+    },
+    {
+      "t": 9.0,
+      "name": "reload-in-flight",
+      "title": "Page reload",
+      "body": "page.reload() discards all client state. The only thing the server has to identify the buyer is the session cookie."
+    },
+    {
+      "t": 12.0,
+      "name": "after-reload",
+      "title": "Still Pay checkout after reload, same email",
+      "body": "The spec asserts the URL still ends in /shoppay on the same host, checkout re-hydrates, and the header shows {email}.",
+      "key": true
+    },
+    {
+      "t": 13.1,
+      "name": "form-filled",
+      "title": "Address, phone and card filled on the reloaded session",
+      "body": "Default Canadian address, benchmark phone, test card."
+    },
+    {
+      "t": 99,
+      "name": "order-confirmed",
+      "title": "Order confirmed",
+      "body": "Thank-you page, confirmation {order}. The reloaded guest session could still pay."
+    }
+  ],
+  "proves": [
+    "The guest session is cookie-backed: a fresh server render of /shoppay recognises the unverified, phoneless buyer without re-authentication.",
+    "A reload from the same browser is not treated as a competing session; address save and Pay now still succeed afterwards.",
+    "Same store, variant and override as run 2, so the only new variable is the reload."
+  ],
+  "caveats": [
+    "Reload only. Closing the tab and reopening /shoppay, or opening it in a second tab, is not exercised.",
+    "Moment timestamps for the reload frames are estimates; check the shots folder if a caption does not match its still.",
+    "Store is on pod 233; the e2e framework warns E2E shops must be on pod 21, so this spec stays local.",
+    "Benchmark identity: fixed email code and simulated SMS; one run, one browser."
+  ]
+}

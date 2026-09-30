@@ -1,0 +1,7 @@
+# Playwright traces carry session cookies and auth headers. Never commit them.
+trace.zip
+*.trace
+*.network
+resources/
+frames.json
+.DS_Store

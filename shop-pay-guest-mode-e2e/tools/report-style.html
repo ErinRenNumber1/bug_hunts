@@ -1,0 +1,44 @@
+<title>__TITLE__</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#f6f5fb;--panel:#ffffff;--ink:#1c1a2e;--muted:#5f5b78;--line:#dcd9ea;--accent:#5a31f4;--pass:#0f7b4f;--pass-bg:#e3f5ec;--warn:#8a5a00;--warn-bg:#fff3d6;--mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;--sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15131f;--panel:#1f1c2c;--ink:#ecebf5;--muted:#a7a3c0;--line:#33304a;--accent:#9d86ff;--pass:#5fd39a;--pass-bg:#173626;--warn:#f1c674;--warn-bg:#3a2d10}}
+:root[data-theme="dark"]{--bg:#15131f;--panel:#1f1c2c;--ink:#ecebf5;--muted:#a7a3c0;--line:#33304a;--accent:#9d86ff;--pass:#5fd39a;--pass-bg:#173626;--warn:#f1c674;--warn-bg:#3a2d10}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;margin:0;padding-inline:20px;padding-block:32px 64px}
+.wrap{max-width:980px;margin:0 auto;display:grid;gap:28px}
+header h1{font-size:28px;font-weight:600;margin:0 0 6px;text-wrap:balance;letter-spacing:-0.01em}
+header p{margin:0;color:var(--muted);max-width:65ch}
+.verdict{display:inline-flex;align-items:center;gap:8px;background:var(--pass-bg);color:var(--pass);font-weight:600;padding:4px 10px;border-radius:999px;font-size:13px;margin-bottom:12px}
+.verdict::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+dl.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 24px;margin:0;padding:16px 20px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+dl.meta div{display:grid;gap:2px}
+dl.meta dt{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)}
+dl.meta dd{margin:0;font-family:var(--mono);font-size:13px;word-break:break-all}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin:0;font-weight:600}
+.strip{display:grid;gap:18px}
+.frame{margin:0;display:grid;grid-template-columns:minmax(0,3fr) minmax(220px,2fr);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.frame img{display:block;width:100%;height:auto;max-width:100%;border-right:1px solid var(--line)}
+.frame figcaption{padding:16px 18px;display:grid;gap:6px;align-content:start}
+.frame .t{font-family:var(--mono);font-size:12px;color:var(--accent);font-variant-numeric:tabular-nums}
+.frame strong{font-weight:600;font-size:15px}
+.frame p{margin:0;color:var(--muted);font-size:14px}
+.frame.key{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.note h3{margin:0 0 8px;font-size:15px;font-weight:600}
+.note ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:grid;gap:6px}
+.note.caveat{background:var(--warn-bg);border-color:transparent}.note.caveat h3,.note.caveat ul{color:var(--warn)}
+@media (max-width:700px){.frame{grid-template-columns:1fr}.frame img{border-right:0;border-bottom:1px solid var(--line)}}
+.verdict.fail{background:var(--warn-bg);color:var(--warn)}
+.tablewrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+table.reqs{border-collapse:collapse;width:100%;font-size:13px;min-width:720px}
+table.reqs th{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+table.reqs td{padding:7px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.reqs tr:last-child td{border-bottom:0}
+table.reqs td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.reqs td.rid{font-family:var(--mono);font-size:12px;word-break:break-all}
+table.reqs td b{font-weight:600}table.reqs td i{color:var(--muted);font-style:normal}
+table.reqs tr.hl td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+p.fine{margin:0;color:var(--muted);font-size:13px;max-width:80ch}
+table.reqs tr.nav td{font-style:italic;color:var(--muted,#777)}
+</style>

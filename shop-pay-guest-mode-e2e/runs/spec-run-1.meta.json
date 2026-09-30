@@ -1,0 +1,15 @@
+{"title":"Guest Mode Production Run","h1":"Shop Pay guest mode, new buyer, treatment variant",
+ "subtitle":"Frames from the Playwright trace of Bashir's spec, run from Erin's machine against the production store on 2026-09-29. Each frame is an unedited screencast still.",
+ "spec":"e2e/tests/shop-pay/shared/guest-mode.spec.ts:19","store":"shoppaye2etesting.myshopify.com · shop 64944767204",
+ "override":"EXP_OVERRIDES e_ac6fae2281b0e908985ecf9c8069ba5d=treatment",
+ "moments":[
+  {"t":2.0,"name":"checkout-landing","title":"Checkout opens","body":"Cart permalink on shoppaye2etesting.myshopify.com, one Shirt at $90. The store is password-protected and the spec unlocks it first."},
+  {"t":3.8,"name":"shop-pay-clicked","title":"Shop Pay button clicked","body":"The express-checkout Shop Pay button opens the Accounts sign-in iframe titled \"Shop Pay Quick Checkout\"."},
+  {"t":5.5,"name":"email-step","title":"Sign-in step loading","body":"The iframe renders inside the merchant checkout. Skeleton state while the login state machine initializes."},
+  {"t":7.5,"name":"email-continue","title":"Email submitted","body":"Benchmark alias {email}, then \"Continue with shop\". This is the moment the treatment decision is made."},
+  {"t":9.0,"name":"pay-checkout-landed","title":"Guest mode: straight into Pay checkout","body":"No phone entry, no SMS code. The Pay checkout shows the buyer email in the header with empty shipping and phone fields. This is the new behaviour under treatment.","key":true},
+  {"t":10.3,"name":"form-filled","title":"Address, phone and card filled","body":"Default US address, a 438555 benchmark phone, and a test card. Card and address are vaulted only at Pay now."},
+  {"t":14.0,"name":"processing","title":"Pay now processing","body":"Order submission in flight."},
+  {"t":18.9,"name":"order-confirmed","title":"Order confirmed","body":"Thank-you page, confirmation {order}, paid with the test card. The spec asserts \"Order was completed with Shop Pay\"."}],
+ "proves":["The override header is honored from Erin's machine: treatment took effect on the first try, so Verdict trusted the request.","Under treatment a brand-new email lands in Pay checkout with no phone entry and no SMS code (frame at 9.0 s).","Address, card, Pay now and order confirmation all work end to end for the guest session.","The loop runs unattended in about 20 seconds, so more scenarios are cheap."],
+ "caveats":["Only the happy path. Bug-hunt cases 5 and 19 and the ten proposed edge cases are not yet scripted.","The store is Bashir's E2E store, not one of the four bug-hunt stores.","Benchmark identities get a fixed email code and simulated SMS, so real OTP delivery is out of scope.","One run, one browser. No concurrency or second-device behaviour exercised."]}
