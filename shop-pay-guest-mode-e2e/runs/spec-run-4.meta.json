@@ -1,0 +1,75 @@
+{
+  "title": "Guest Buyer Signs In Elsewhere",
+  "h1": "Guest-mode buyer on lucasmrichtest, then reinis-test-store: account sign-in and Shop Pay checkout",
+  "subtitle": "Frames from the Playwright trace of spec 4, attempt 5, run from Erin's machine against production on 2026-09-30. Spec 3 in full, then the same browser signs in to reinis-test-store's customer account through Sign in with Shop and opens a cart permalink there. Frames are unedited screencast stills, except the phone-code frame, which is a test screenshot of the Shop sign-in popup.",
+  "spec": "e2e/tests/shop-pay/shared/guest-mode-lucasmrichtest-account-signin.spec.ts:72 (untracked)",
+  "store": "lucasmrichtest.myshopify.com · shop 60529737962 (checkout on polly-lucas.myshopify.com), then reinis-test-store.myshopify.com · shop 8013840406",
+  "override": "EXP_OVERRIDES e_ac6fae2281b0e908985ecf9c8069ba5d=treatment (header sent for the whole run)",
+  "moments": [
+    {
+      "t": 9.0,
+      "name": "pay-checkout-landed",
+      "title": "A. Guest mode: straight into Pay checkout",
+      "body": "Benchmark alias {email} submitted at the Shop Pay sign-in, no phone step. Shipping phone 4385552215 is typed into the address form later; it is never verified in part A."
+    },
+    {
+      "t": 21.5,
+      "name": "order-confirmed",
+      "title": "A. Order confirmed on lucasmrichtest",
+      "body": "Thank-you page, confirmation {order}. The buyer now has a guest-mode Shop account with an unverified phone on the shipping address."
+    },
+    {
+      "t": 25.0,
+      "name": "account-login-page",
+      "title": "B. reinis-test-store customer account sign-in",
+      "body": "/account/login redirects through Sign in with Shop to shopify.com/authentication/8013840406/login. The spec clicks Continue with Shop, which opens a popup at shop.app/accounts/login with authentication_level=email."
+    },
+    {
+      "t": 27.6,
+      "name": "email-code",
+      "title": "B. Email code entered in the popup",
+      "body": "The Shop sign-in popup: email typed, then \"Verify your email\" with code 000000 entered. The spec confirmed no phone field was present at this point."
+    },
+    {
+      "attachment": "popup-phone-step",
+      "t": 0,
+      "name": "phone-step-at-sign-in",
+      "key": true,
+      "title": "B. Unexpected: Shop then asks for a phone code",
+      "body": "\"Verify your phone, enter code sent to +1 ••• ••• •215\": the part A shipping phone 4385552215, never verified. The spec expected an email code only and records this as a soft failure, then enters 000000, which Shop accepts."
+    },
+    {
+      "t": 34.8,
+      "name": "signed-in",
+      "title": "B. Signed in to the customer account",
+      "key": true,
+      "body": "Popup closed by itself through shop.app/pay/session/create_and_redirect and /customer_authentication/sso_hint. URL is shopify.com/8013840406/account with the Orders heading."
+    },
+    {
+      "t": 37.4,
+      "name": "reinis-cart-permalink",
+      "title": "C. Cart permalink goes straight to Shop Pay",
+      "key": true,
+      "body": "reinis-test-store /cart/51304521662486:1 redirected: silent OAuth on shopify.com/authentication, back to /cart?shop_sign_in=true, then shop.app/pay/session/create_and_redirect, then /checkout/8013840406/cn/…/shoppay. No merchant checkout page, no Shop Pay button, no email, no phone, no SMS code."
+    },
+    {
+      "t": 41.0,
+      "name": "reinis-pay-checkout",
+      "title": "C. Pay checkout on reinis-test-store, fully vaulted",
+      "key": true,
+      "body": "{email} in the header, Alice Smith address from part A, Visa ending 5556, Pay now enabled. The spec expected phone verification here and failed waiting for a /checkouts/ URL that never came."
+    }
+  ],
+  "proves": [
+    "A buyer created through guest mode can sign in to a different store's customer account through Sign in with Shop, but Shop asked for an email code and then an SMS code to the unverified part A shipping phone, not the email code alone.",
+    "After that sign-in, opening a cart permalink on reinis-test-store lands the buyer directly in Shop Pay checkout with address and card vaulted, and no phone or SMS verification at all.",
+    "All three parts run in one browser, so this is one person continuing, not a competing browser."
+  ],
+  "caveats": [
+    "Why part C skipped SMS is inferred, not shown: the phone code accepted in part B most likely verified the shipping phone, so the buyer was already phone-verified when Shop Pay was entered. A run that avoids the part B phone step would settle it, but the popup could not be completed without it.",
+    "The direct jump from the cart permalink into Pay checkout happens because the customer account session is present; whether that is the intended experience for a guest-mode buyer is a product question, not something this run decides.",
+    "The guest-mode override header is sent for the whole run, including part C. An existing buyer with an order is outside the experiment's gates, so it should not change part C.",
+    "Playwright verdict is Failed because of the two soft expectations above; every step otherwise completed. Store lucasmrichtest is on pod 233 (framework warns E2E shops must be on pod 21), so this spec stays local.",
+    "Benchmark identity: fixed email code and simulated SMS; one run, one browser."
+  ]
+}

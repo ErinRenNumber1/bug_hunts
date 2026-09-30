@@ -36,7 +36,7 @@ with zipfile.ZipFile(trace) as z: z.extractall(run_dir)
 meta = json.load(open(a.meta))
 
 # --- index frames, actions, errors, identity -------------------------------------------------
-frames, errors, actions = [], [], {}
+frames, errors, actions, attachments = [], [], {}, {}
 navs = []  # page.reload() times from the action log, shown as marker rows in the request table
 for f in sorted(glob.glob(os.path.join(run_dir, '*.trace'))):
     for line in open(f):
@@ -51,6 +51,8 @@ for f in sorted(glob.glob(os.path.join(run_dir, '*.trace'))):
         elif t == 'after':
             if e.get('callId') in actions: actions[e['callId']][2] = e['endTime']
             if e.get('error'): errors.append(e['error'].get('message', str(e['error']))[:300])
+            for att in e.get('attachments') or []:
+                if att.get('file'): attachments[att['name']] = (e['endTime'], os.path.join(run_dir, att['file']), att.get('contentType', ''))
 frames.sort()
 navs.sort()
 t0 = frames[0][0]
@@ -131,12 +133,17 @@ def pick(t):
     return rel(frames[-1][0]), frames[-1][1]
 
 fill = lambda s: s.format(email=email, order=order, duration=f'{duration:.1f}')
-uri = lambda p: 'data:image/jpeg;base64,' + base64.b64encode(open(p, 'rb').read()).decode()
+uri = lambda p: 'data:image/%s;base64,' % ('png' if p.endswith('.png') else 'jpeg') + base64.b64encode(open(p, 'rb').read()).decode()
 
 figs = []
 for i, m in enumerate(meta['moments'], 1):
-    t, fn = pick(m['t'])
-    dst = os.path.join(run_dir, 'shots', f"{i:02d}-{m['name']}-t{t:.1f}.jpeg")
+    if m.get('attachment'):
+        # test.info().attach screenshot; the only capture of a page with no screencast (popup windows)
+        at_ts, fn, ctype = attachments[m['attachment']]
+        t, ext = rel(at_ts), '.png' if 'png' in ctype else '.jpeg'
+    else:
+        t, fn = pick(m['t']); ext = '.jpeg'
+    dst = os.path.join(run_dir, 'shots', f"{i:02d}-{m['name']}-t{t:.1f}{ext}")
     shutil.copy(fn, dst)
     figs.append('<figure class="frame%s"><img src="%s" alt="%s at %.1f s" width="1280" height="720"><figcaption><span class="t">%.1f s</span><strong>%s</strong><p>%s</p></figcaption></figure>'
                 % (' key' if m.get('key') else '', uri(dst), m['title'], t, t, m['title'], fill(m['body'])))
@@ -144,7 +151,8 @@ for i, m in enumerate(meta['moments'], 1):
 li = lambda items, f=True: '\n'.join('    <li>%s</li>' % (fill(x) if f else x.replace('<','&lt;')) for x in items)
 err_block = ''
 if failed and errors:
-    err_block = '<div class="note caveat"><h3>Failure</h3><ul>%s</ul></div>' % li(errors[-3:], False)
+    shown = [x for x in dict.fromkeys(errors) if 'has been closed' not in x and 'Timeout 500ms' not in x and 'Timeout 1000ms' not in x]
+    err_block = '<div class="note caveat"><h3>Failure</h3><ul>%s</ul></div>' % li(shown[-4:] or errors[-3:], False)
 
 html = STYLE.replace('__TITLE__', meta['title']) + '''<div class="wrap">
 <header>
