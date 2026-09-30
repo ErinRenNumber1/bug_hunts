@@ -58,7 +58,7 @@
       "body": "POST /pay/transactions/{{checkout_token}}/agreements returns 422 with body {{\"errors\":[{{\"error\":\"checkout_error\"}}],\"error_classification\":{{\"error_type\":\"unknown\",\"retry_eligible\":false,\"failure_stage\":\"api_response\"}}}}. The iframe replaces the plan step with \"Installments aren't available at this time. Try again later, or pay in full to complete your purchase.\" and a Return to checkout button. No payment plan is offered and the order is not placed."
     },
     {
-      "t": 21.5,
+      "t": 9999,
       "name": "run-end",
       "title": "End of run",
       "body": "The spec stops here by design: it waits for either the Affirm Complete purchase button or the technical-issues text and fails by name with the recorded agreement response. Attempt 1 (14:23Z) reached the same 422 on checkout token b0d14f3ae08c59177372f92114210a1c, so this is reproducible on this store today."

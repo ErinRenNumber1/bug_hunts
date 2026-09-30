@@ -14,6 +14,7 @@ in Pay checkout, with no phone entry and no SMS code.
 | 3 | lucasmrichtest | [specs/guest-mode-lucasmrichtest-reload.spec.ts](specs/guest-mode-lucasmrichtest-reload.spec.ts) | passed, 22.0s | [runs/spec-run-3/report.html](runs/spec-run-3/report.html) |
 | 4 | lucasmrichtest, then reinis-test-store | [specs/guest-mode-lucasmrichtest-account-signin.spec.ts](specs/guest-mode-lucasmrichtest-account-signin.spec.ts) | passed, 38.9s (attempt 8; attempts 4 to 6 recorded the same behaviour as soft failures) | [runs/spec-run-4/report.html](runs/spec-run-4/report.html) |
 | 5 | spi-high-aov | [specs/guest-mode-spi-high-aov.spec.ts](specs/guest-mode-spi-high-aov.spec.ts) | failed, 21.6s (attempt 2; attempt 1 failed the same way) | [runs/spec-run-5/report.html](runs/spec-run-5/report.html) |
+| 5, four browsers | spi-high-aov | same spec via `tools/run-browsers.sh 5` | all failed the same way: chromium 29.6s, webkit 41.0s, firefox 35.4s, chrome 28.4s | [chromium](runs/spec-run-5-chromium/report.html) · [webkit](runs/spec-run-5-webkit/report.html) · [firefox](runs/spec-run-5-firefox/report.html) · [chrome](runs/spec-run-5-chrome/report.html) |
 
 Run 3 reloads the page after landing in Pay checkout and asserts the buyer is still on `/shoppay`, on the
 same host, with the same email in the header, then completes the order. That proves the guest session is
