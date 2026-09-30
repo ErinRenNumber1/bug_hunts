@@ -70,7 +70,7 @@
   ],
   "caveats": [
     "The 422 body is shop-server's generic wrapper for a non-2xx from the upstream agreements API (engines/pay/app/services/pay/installments/agreements_api.rb, handle_response). The trace has no upstream detail; the server logs an agreements_call debug event with the upstream HTTP status.",
-    "Not yet separated: whether this is the store, the USD 350 amount, the benchmark test identity, or Affirm being unavailable for everyone at that time. John's tracked spec on spi-e2e-testing and a USD 100 run on this store are the next two checks.",
+    "Separated the same day: John's tracked guest-mode spec on spi-e2e-testing (USD 65) passed at 15:14Z with the agreement returning 202; spec 5 with the USD 100 product on spi-high-aov failed with the same 422 at 15:17Z; and a control spec on spi-high-aov with guest mode forced to control and an ordinary email, phone and SMS-code sign-up failed with the same 422 at 15:21Z. The failure follows the store, not guest mode or the amount.",
     "The bug hunt doc records case 4 as passed by John and Nabeel. Their runs were manual and may not have used the benchmark identity.",
     "Full run {duration} s. Store is not on the e2e pod, so this spec stays local. Benchmark identity: simulated SMS; one browser, one run per attempt."
   ]

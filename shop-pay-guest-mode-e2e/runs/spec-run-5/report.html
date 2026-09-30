@@ -54,7 +54,7 @@ table.reqs tr.nav td{font-style:italic;color:var(--muted,#777)}
   <div><dt>Variant override</dt><dd>EXP_OVERRIDES e_ac6fae2281b0e908985ecf9c8069ba5d=treatment (header sent for the whole run) · X-Verdict-Overrides-Applied: e_shop_pay_guest_mode</dd></div>
   <div><dt>Buyer</dt><dd>shop.end_to_end_test+23d82d39-41dc-45db-b93f-ad6aceab2a3e@shopify.com (benchmark alias)</dd></div>
   <div><dt>Order</dt><dd>?</dd></div>
-  <div><dt>Trace</dt><dd>test-results/guest-mode-spi-high-aov--S-21d7e-letes-an-Installments-order-shop-pay-installments/trace.zip</dd></div>
+  <div><dt>Trace</dt><dd>../../../../../../../bug_hunts/shop-pay-guest-mode-e2e/runs/spec-run-5/trace.zip</dd></div>
 </dl>
 <h2>Timeline</h2>
 <div class="strip">
@@ -82,7 +82,7 @@ table.reqs tr.nav td{font-style:italic;color:var(--muted,#777)}
   </ul></div>
   <div class="note caveat"><h3>What it does not prove</h3><ul>
     <li>The 422 body is shop-server's generic wrapper for a non-2xx from the upstream agreements API (engines/pay/app/services/pay/installments/agreements_api.rb, handle_response). The trace has no upstream detail; the server logs an agreements_call debug event with the upstream HTTP status.</li>
-    <li>Not yet separated: whether this is the store, the USD 350 amount, the benchmark test identity, or Affirm being unavailable for everyone at that time. John's tracked spec on spi-e2e-testing and a USD 100 run on this store are the next two checks.</li>
+    <li>Separated the same day: John's tracked guest-mode spec on spi-e2e-testing (USD 65) passed at 15:14Z with the agreement returning 202; spec 5 with the USD 100 product on spi-high-aov failed with the same 422 at 15:17Z; and a control spec on spi-high-aov with guest mode forced to control and an ordinary email, phone and SMS-code sign-up failed with the same 422 at 15:21Z. The failure follows the store, not guest mode or the amount.</li>
     <li>The bug hunt doc records case 4 as passed by John and Nabeel. Their runs were manual and may not have used the benchmark identity.</li>
     <li>Full run 21.6 s. Store is not on the e2e pod, so this spec stays local. Benchmark identity: simulated SMS; one browser, one run per attempt.</li>
   </ul></div>

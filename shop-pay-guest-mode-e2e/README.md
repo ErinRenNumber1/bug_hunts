@@ -30,9 +30,11 @@ guest-mode buyer sees no Installments address banner on the empty shipping form 
 and Installments underwriting asks for an SMS code to the shipping phone that guest mode skipped. After Affirm
 identity verification, `POST /pay/transactions/<token>/agreements` returned 422 `checkout_error` on both
 attempts on 2026-09-30 and the iframe showed "We're experiencing technical issues", so no payment plan was
-offered and the order was not placed. The spec fails by name on that outcome. Whether it is the store, the
-amount, the benchmark identity or Affirm availability at the time is not yet separated; the spec takes
-`SPI_HIGH_AOV_VARIANT=68589829914646` to rerun with a USD 100 product.
+offered and the order was not placed. The spec fails by name on that outcome. Three more runs the same day pinned it down: John's tracked guest-mode spec on spi-e2e-testing passed with the
+agreement returning 202; spec 5 with a USD 100 product on spi-high-aov failed the same way; and
+[specs/guest-mode-spi-high-aov-control.spec.ts](specs/guest-mode-spi-high-aov-control.spec.ts), guest mode forced
+to control with an ordinary email, phone and SMS-code sign-up, failed the same way too. The failure follows the
+store, not guest mode or the amount. Both specs take `SPI_HIGH_AOV_VARIANT=<variant id>` to change the product.
 
 Each report embeds eight stills from the Playwright screencast, the storefront checkout token, the
 checkout session identifier, and the `x-request-id` of every key request, with the email-submit request
