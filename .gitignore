@@ -5,3 +5,7 @@ trace.zip
 resources/
 frames.json
 .DS_Store
+*.stacks
+attachments/
+screencast/
+src/

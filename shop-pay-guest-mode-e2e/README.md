@@ -12,7 +12,7 @@ in Pay checkout, with no phone entry and no SMS code.
 | 1 | shoppaye2etesting | checkout-web `guest-mode.spec.ts` (tracked in World, not copied here) | passed | [runs/spec-run-1/report.html](runs/spec-run-1/report.html) |
 | 2 | lucasmrichtest | [specs/guest-mode-lucasmrichtest.spec.ts](specs/guest-mode-lucasmrichtest.spec.ts) | passed, 19.9s | [runs/spec-run-2/report.html](runs/spec-run-2/report.html) |
 | 3 | lucasmrichtest | [specs/guest-mode-lucasmrichtest-reload.spec.ts](specs/guest-mode-lucasmrichtest-reload.spec.ts) | passed, 22.0s | [runs/spec-run-3/report.html](runs/spec-run-3/report.html) |
-| 4 | lucasmrichtest, then reinis-test-store | [specs/guest-mode-lucasmrichtest-account-signin.spec.ts](specs/guest-mode-lucasmrichtest-account-signin.spec.ts) | passed, 38.1s (attempt 7; attempts 4 to 6 recorded the same behaviour as soft failures) | [runs/spec-run-4/report.html](runs/spec-run-4/report.html) |
+| 4 | lucasmrichtest, then reinis-test-store | [specs/guest-mode-lucasmrichtest-account-signin.spec.ts](specs/guest-mode-lucasmrichtest-account-signin.spec.ts) | passed, 38.9s (attempt 8; attempts 4 to 6 recorded the same behaviour as soft failures) | [runs/spec-run-4/report.html](runs/spec-run-4/report.html) |
 
 Run 3 reloads the page after landing in Pay checkout and asserts the buyer is still on `/shoppay`, on the
 same host, with the same email in the header, then completes the order. That proves the guest session is

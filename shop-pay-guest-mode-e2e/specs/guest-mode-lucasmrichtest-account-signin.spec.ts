@@ -179,6 +179,8 @@ test.describe('[Shop Pay] Guest mode on lucasmrichtest, then reinis-test-store a
         (popup ?? page).getByText(/confirm your email|check your email|verify your email/i).first(),
         'Expected the email verification step',
       ).toBeVisible({timeout: 10_000});
+      // The screencast only records the main window, so capture the popup's email-code screen here.
+      await test.info().attach('popup-email-code-step', {body: await (popup ?? page).screenshot(), contentType: 'image/png'});
       await code.fill(BENCHMARK_OTP);
       // Most OTP fields auto-submit on the sixth digit. Run 3 clicked a generic Continue across every
       // page and hit the main page's empty email form (POST /authentication/<shop>/login -> 400,
