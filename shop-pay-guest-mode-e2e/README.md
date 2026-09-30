@@ -58,6 +58,30 @@ Both specs use the benchmark test identity (`shop.end_to_end_test+<uuid>@shopify
 recognises on any store, so the SMS code is simulated. lucasmrichtest is not on the e2e pod, so the page
 objects log an "Invalid Pod ID" warning locally; keep these specs local rather than in CI.
 
+## Running on other browsers
+
+`tools/playwright.guest-mode.config.ts` is a local Playwright config (copy it to the checkout-web root; it is
+not tracked in World) that reuses the main config and defines one project per browser profile, all pointing at
+the guest-mode specs: `chromium`, `webkit` (Desktop Safari profile), `firefox`, `iphone-15` (WebKit, mobile),
+`pixel-7` (Chromium, mobile), `chrome` and `msedge` (the branded browsers installed on the Mac, through
+Playwright's `channel`). Every project keeps the `Playwright-checkout-e2e-tests/local` user agent suffix that
+keeps e2e traffic out of the identity graph and bot protection.
+
+`tools/run-browsers.sh <run> [browser ...]` runs one spec on each browser and builds one report per browser
+under `runs/spec-run-<run>-<browser>/` (default browsers: chromium webkit firefox):
+
+```
+tools/run-browsers.sh 5 chromium webkit firefox
+tools/run-browsers.sh 2 iphone-15
+```
+
+Reports carry the browser in the verdict line. Moments in a meta file can anchor on a `step` (the
+`test.step` title prefix, such as `"step": "A2"`) instead of a fixed `t`, which keeps the stills aligned when
+timing differs between browsers; specs 2 and 3 have no steps, so their stills on other browsers may drift.
+Playwright's WebKit is the Safari engine without Safari's tracking prevention, so it will not reproduce
+ITP-specific cookie behaviour. `webkit` and `firefox` need `npx playwright install webkit firefox` once;
+`msedge` needs `npx playwright install msedge`.
+
 ## Building a report
 
 ```

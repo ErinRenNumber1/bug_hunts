@@ -10,7 +10,8 @@
       "t": 7.0,
       "name": "pay-checkout-landed",
       "title": "A1. Guest mode: straight into Pay checkout",
-      "body": "Benchmark alias {email} submitted at the Shop Pay sign-in; no phone field and no SMS step. The spec asserts the phone input and the phone verification step have zero matches."
+      "body": "Benchmark alias {email} submitted at the Shop Pay sign-in; no phone field and no SMS step. The spec asserts the phone input and the phone verification step have zero matches.",
+      "step": "A1"
     },
     {
       "attachment": "empty-form-no-banner",

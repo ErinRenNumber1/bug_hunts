@@ -20,6 +20,7 @@ ap.add_argument('--run', required=True)
 ap.add_argument('--meta', required=True)
 ap.add_argument('--trace')
 ap.add_argument('--spec-glob', default='*')
+ap.add_argument('--browser', default='', help='project name from a multi-browser run (chromium, webkit, firefox, ...); shown in the verdict line')
 ap.add_argument('--status', choices=['passed','failed'], default='passed', help='Playwright verdict from the run output; trace errors alone are noisy (swallowed waits also log)')
 a = ap.parse_args()
 
@@ -37,6 +38,7 @@ meta = json.load(open(a.meta))
 
 # --- index frames, actions, errors, identity -------------------------------------------------
 frames, errors, actions, attachments = [], [], {}, {}
+steps, step_ids = {}, {}  # test.step title -> [start, end]; lets a moment anchor on a step instead of a fixed time, which differs per browser
 navs = []  # page.reload() times from the action log, shown as marker rows in the request table
 for f in sorted(glob.glob(os.path.join(run_dir, '*.trace'))):
     for line in open(f):
@@ -46,10 +48,13 @@ for f in sorted(glob.glob(os.path.join(run_dir, '*.trace'))):
         if t == 'screencast-frame': frames.append((e['timestamp'], os.path.join(run_dir, e['file'])))
         elif t == 'before':
             actions[e['callId']] = [e['startTime'], e.get('apiName', ''), None]
+            if e.get('method') == 'test.step' and e.get('title'):
+                steps[e['title']] = [e['startTime'], None]; step_ids[e['callId']] = e['title']
             if e.get('class') == 'Page' and e.get('method') == 'reload':
                 navs.append(e['startTime'])
         elif t == 'after':
             if e.get('callId') in actions: actions[e['callId']][2] = e['endTime']
+            if e.get('callId') in step_ids: steps[step_ids[e['callId']]][1] = e['endTime']
             if e.get('error'): errors.append(e['error'].get('message', str(e['error']))[:300])
             for att in e.get('attachments') or []:
                 if att.get('file'): attachments[att['name']] = (e['endTime'], os.path.join(run_dir, att['file']), att.get('contentType', ''))
@@ -139,8 +144,16 @@ figs = []
 for i, m in enumerate(meta['moments'], 1):
     if m.get('attachment'):
         # test.info().attach screenshot; the only capture of a page with no screencast (popup windows)
+        if m['attachment'] not in attachments:
+            # the step that attaches it did not run on this attempt (e.g. failure-only or success-only shots)
+            print('skip moment %s: no attachment %r in this trace' % (m['name'], m['attachment'])); continue
         at_ts, fn, ctype = attachments[m['attachment']]
         t, ext = rel(at_ts), '.png' if 'png' in ctype else '.jpeg'
+    elif m.get('step'):
+        # anchor on the end of the test.step whose title starts with m['step'] (start if it never ended); fall back to m['t']
+        hit = next((v for k, v in steps.items() if k.startswith(m['step'])), None)
+        at = (hit[1] or hit[0]) if hit else None
+        t, fn = pick(rel(at) if at is not None else m.get('t', 0)); ext = '.jpeg'
     else:
         t, fn = pick(m['t']); ext = '.jpeg'
     dst = os.path.join(run_dir, 'shots', f"{i:02d}-{m['name']}-t{t:.1f}{ext}")
@@ -156,7 +169,7 @@ if failed and errors:
 
 html = STYLE.replace('__TITLE__', meta['title']) + '''<div class="wrap">
 <header>
-  <div class="verdict%s">%s · %.1f s · production</div>
+  <div class="verdict%s">%s · %.1f s · production%s</div>
   <h1>%s</h1>
   <p>%s</p>
 </header>
@@ -184,7 +197,7 @@ html = STYLE.replace('__TITLE__', meta['title']) + '''<div class="wrap">
   </ul></div>
 </div>
 </div>
-''' % (' fail' if failed else '', status, duration, meta['h1'], fill(meta['subtitle']), meta['spec'], meta['store'],
+''' % (' fail' if failed else '', status, duration, (' · ' + esc(a.browser)) if a.browser else '', meta['h1'], fill(meta['subtitle']), meta['spec'], meta['store'],
        meta['override'], ', '.join(applied) or 'none seen', email, order,
        os.path.relpath(trace, os.path.dirname(TEST_RESULTS)), '\n'.join(figs), ids_block, err_block, li(meta['proves']), li(meta['caveats']))
 open(os.path.join(run_dir, 'report.html'), 'w').write(html)

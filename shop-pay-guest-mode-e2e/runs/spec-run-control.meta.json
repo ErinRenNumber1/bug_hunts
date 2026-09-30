@@ -1,0 +1,24 @@
+{
+  "title": "Installments With Guest Mode Off",
+  "h1": "spi-high-aov control: ordinary Shop Pay sign-up (email, phone, SMS code), then Installments",
+  "subtitle": "Frames from the Playwright trace of the control spec, run from Erin's machine against production. Same store and product as spec 5, but the guest mode experiment is forced to control, so the buyer signs up with email, phone and SMS code before landing in Pay checkout. Exists to show whether the Installments agreement failure on spi-high-aov depends on guest mode.",
+  "spec": "e2e/tests/shop-pay-installments/guest-mode-spi-high-aov-control.spec.ts:32 (untracked)",
+  "store": "spi-high-aov.myshopify.com · shop 59271905336 · product-with-unit-price USD 350 (variant 55322433454221) unless SPI_HIGH_AOV_VARIANT is set",
+  "override": "e_ac6fae2281b0e908985ecf9c8069ba5d=control",
+  "moments": [
+    {"step": "C1", "t": 0, "name": "signed-up", "attachment": "control-signed-up", "title": "C1. Signed up with email, phone and SMS code", "body": "Benchmark alias {email}: email, phone and the simulated SMS code were all asked for before Pay checkout, as guest mode off requires."},
+    {"step": "C2", "t": 0, "name": "installments-selected", "attachment": "control-installments-selected", "title": "C2. Address, Pay in installments, card", "body": "US shipping address filled, Pay in installments selected and a test card added."},
+    {"step": "C3", "t": 0, "name": "payment-plans", "attachment": "control-phone-otp", "title": "C3. Continue to payment plans", "body": "The phone was verified at sign-up, so underwriting normally goes straight to Affirm without a second SMS code; the spec enters one only if asked."},
+    {"step": "C4", "t": 0, "name": "affirm-identity-done", "attachment": "control-affirm-identity-done", "key": true, "title": "C4. Affirm identity verification", "body": "Identity verification inside the Affirm iframe completed; the next screen decides the run."},
+    {"step": "C4", "t": 0, "name": "installments-unavailable", "attachment": "control-installments-unavailable", "key": true, "title": "C4. Agreement fails: \"We're experiencing technical issues\"", "body": "Shown only when POST /pay/transactions/<token>/agreements fails; the spec fails by name with the recorded status and body."},
+    {"step": "C5", "t": 0, "name": "order-confirmed", "attachment": "control-order-confirmed", "key": true, "title": "C5. Order confirmed", "body": "Shown only when the agreement succeeds and the order completes, confirmation {order}."},
+    {"t": 9999, "name": "run-end", "title": "End of run", "body": "Last screencast frame, {duration} s after the first."}
+  ],
+  "proves": [
+    "Whether an ordinary (non guest mode) buyer can complete an Installments agreement on spi-high-aov with the same product, identity and browser as spec 5."
+  ],
+  "caveats": [
+    "Benchmark identity: simulated SMS code; one run, one browser. Full run {duration} s.",
+    "On 2026-09-30 this control failed with the same 422 checkout_error as spec 5, so the failure follows the store rather than guest mode."
+  ]
+}
