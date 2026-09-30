@@ -10,3 +10,4 @@ attachments/
 screencast/
 src/
 traces/
+__pycache__/

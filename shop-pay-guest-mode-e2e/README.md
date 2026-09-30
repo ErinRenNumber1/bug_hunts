@@ -16,7 +16,7 @@ in Pay checkout, with no phone entry and no SMS code.
 | 5 | spi-high-aov | [specs/guest-mode-spi-high-aov.spec.ts](specs/guest-mode-spi-high-aov.spec.ts) | failed the same way on all four browsers: chromium 29.6s, webkit 41.0s, firefox 35.4s, chrome 28.4s (two earlier Chromium attempts failed the same way) | [runs/spec-run-5/report.html](runs/spec-run-5/report.html) |
 | control | spi-high-aov | [specs/guest-mode-spi-high-aov-control.spec.ts](specs/guest-mode-spi-high-aov-control.spec.ts) | failed the same way as run 5 on all four browsers: chromium 27.5s, webkit 32.2s, firefox 32.1s, chrome 27.5s | [runs/spec-run-control/report.html](runs/spec-run-control/report.html) |
 
-The four-browser rerun of runs 1 to 3 happened at about 18:09 UTC on 2026-09-30 through `tools/run-browsers.sh all`.
+The four-browser rerun of runs 1 to 3 happened at about 18:09 UTC on 2026-09-30 through the browser runner in `../tools/` (see [Running on other browsers](#running-on-other-browsers)).
 On every browser the guest-mode buyer landed in Pay checkout after the email alone, filled the form and got an
 order confirmation, so the guest-mode behaviour itself held. The one assertion that failed is the last one:
 after the order, `POST <storefront>/shopify_pay/<checkout token>/remember_me` returned 200 with no
@@ -77,20 +77,21 @@ objects log an "Invalid Pod ID" warning locally; keep these specs local rather t
 
 ## Running on other browsers
 
-`tools/playwright.guest-mode.config.ts` is a local Playwright config (copy it to the checkout-web root; it is
-not tracked in World) that reuses the main config and defines one project per browser profile, all pointing at
-the guest-mode specs: `chromium`, `webkit` (Desktop Safari profile), `firefox`, and `chrome` (the Google Chrome
-installed on the Mac, through Playwright's `channel`). Every project keeps the `Playwright-checkout-e2e-tests/local` user agent suffix that
-keeps e2e traffic out of the identity graph and bot protection.
+`../tools/playwright.bug-hunt.config.ts` is a local Playwright config (the runner copies it to the checkout-web
+root; it is not tracked in World) that reuses the main config and defines one project per browser profile:
+`chromium`, `webkit` (Desktop Safari profile), `firefox`, and `chrome` (the Google Chrome installed on the Mac,
+through Playwright's `channel`). Every project keeps the `Playwright-checkout-e2e-tests/local` user agent suffix
+that keeps e2e traffic out of the identity graph and bot protection.
 
-`tools/run-browsers.sh <run|all> [browser ...]` runs one spec (or every spec, in order 1 to 5 then control) on
-each browser and rebuilds that spec's `runs/spec-run-<run>/report.html` with one section per browser behind the
-dropdown (default browsers: all four):
+`specs.conf` in this folder maps each run id to its spec path in checkout-web, in the order `all` runs them.
+From the repo root, `tools/run-browsers.sh shop-pay-guest-mode-e2e <run|all> [browser ...]` runs one spec (or
+every spec) on each browser and rebuilds that spec's `runs/spec-run-<run>/report.html` with one section per
+browser behind the dropdown (default browsers: all four):
 
 ```
-tools/run-browsers.sh all
-tools/run-browsers.sh 5
-tools/run-browsers.sh 2 webkit
+tools/run-browsers.sh shop-pay-guest-mode-e2e all
+tools/run-browsers.sh shop-pay-guest-mode-e2e 5
+tools/run-browsers.sh shop-pay-guest-mode-e2e 2 webkit
 ```
 
 Stills are chosen per browser, so timing differences do not misalign them. A moment in a meta file anchors
@@ -103,13 +104,28 @@ ITP-specific cookie behaviour. `webkit` and `firefox` need `npx playwright insta
 
 ## Building a report
 
+From the repo root:
+
 ```
-python3 tools/make-report.py --run spec-run-N --meta runs/spec-run-N.meta.json \
+python3 tools/make-report.py --run spec-run-N --meta shop-pay-guest-mode-e2e/runs/spec-run-N.meta.json \
   --trace chromium=path/to/trace.zip --trace webkit=path/to/trace.zip \
   --status chromium=passed --status webkit=failed
 ```
 
-The script copies and unzips each trace into `runs/spec-run-N/traces/<browser>/`, picks one screencast frame
-per moment listed in the meta file into `shots/<browser>/`, extracts the identifiers, and writes one
-`report.html` with a section per browser. A bare `--trace path` with `--status passed` builds a single-browser
-report (named by `--browser`, default chromium). The `traces/` folder is gitignored and must stay that way.
+The script writes next to the meta file: it copies and unzips each trace into `runs/spec-run-N/traces/<browser>/`,
+picks one screencast frame per moment listed in the meta file into `shots/<browser>/`, extracts the identifiers,
+and writes one `report.html` with a section per browser. A bare `--trace path` with `--status passed` builds a
+single-browser report (named by `--browser`, default chromium). The `traces/` folder is gitignored and must stay
+that way.
+
+## Open items (resume here)
+
+- The `remember_me` `Set-Cookie` regression: passing at about 02:18 UTC on 2026-09-30, failing from about
+  18:10 UTC on every browser and with the base config. The Core files that write the cookie have no commit since
+  2026-09-29. One time-correlated merge, "Remove the raw session-data handoff (#2092689)" at 17:23 UTC, is a
+  candidate only and has not been verified. Next step: rerun spec 2 and, if it still fails, ask the author of
+  that merge or check whether John's tracked `guest-mode.spec.ts` fails in CI the same way.
+- The spi-high-aov `POST /pay/transactions/<token>/agreements` 422: follows the store. Not yet done: an Observe
+  lookup of the agreements call for shop 59271905336, and asking John or Nabeel when bug hunt case 4 last passed.
+- World PR https://github.com/shop/world/pull/1022614 (spec 5) is a draft. Remove the `SPI_HIGH_AOV_VARIANT`
+  knob before marking it ready.

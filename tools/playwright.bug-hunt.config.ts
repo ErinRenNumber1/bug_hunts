@@ -1,11 +1,11 @@
 /**
- * Local-only Playwright config for re-running the Shop Pay guest mode evidence specs
- * on several browsers. Not tracked in World; the canonical copy lives in
- * ~/bug_hunts/shop-pay-guest-mode-e2e/tools/. Reuses everything from the main config
- * (fixtures, timeouts, globalSetup) and replaces the project list with one project per
- * browser profile, all pointing at the guest-mode specs.
+ * Local-only Playwright config for re-running bug hunt evidence specs on several
+ * browsers. Not tracked in World; the canonical copy lives in ~/bug_hunts/tools/.
+ * Reuses everything from the main config (fixtures, timeouts, globalSetup) and replaces
+ * the project list with one project per browser profile. Any spec under e2e/tests can
+ * run; pass the spec file on the command line.
  *
- *   npx playwright test --config playwright.guest-mode.config.ts <spec> --project webkit --project firefox
+ *   npx playwright test --config playwright.bug-hunt.config.ts <spec> --project webkit --project firefox
  *
  * Playwright names each test's artifact directory <spec>-<title>-<project>, so one run
  * over several projects leaves one trace.zip per browser under test-results/.
@@ -36,15 +36,12 @@ const config = {
   reporter: [
     ['list'],
     ['html', {open: 'never', outputFolder: process.env.PW_HTML_DIR ?? 'playwright-report'}],
-    ['json', {outputFile: process.env.PW_JSON_OUT ?? 'test-results/guest-mode-browsers.json'}],
+    ['json', {outputFile: process.env.PW_JSON_OUT ?? 'test-results/bug-hunt-browsers.json'}],
   ],
   projects: Object.entries(BROWSERS).map(([name, {device, channel}]) => ({
     name,
     testDir: path.resolve('e2e', 'tests'),
-    testMatch: [
-      '**/shop-pay/shared/guest-mode*.spec.ts',
-      '**/shop-pay-installments/guest-mode*.spec.ts',
-    ],
+    testMatch: '**/*.spec.ts',
     timeout: 90_000,
     use: {
       ...devices[device],

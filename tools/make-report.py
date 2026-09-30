@@ -2,7 +2,7 @@
 """Turn one or more Playwright trace.zip files into a single report.html for a guest-mode production run.
 
 Usage:
-  make-report.py --run spec-run-5 --meta runs/spec-run-5.meta.json \
+  tools/make-report.py --run spec-run-5 --meta <hunt>/runs/spec-run-5.meta.json \
       --trace chromium=path/trace.zip --trace webkit=path/trace.zip ... \
       --status chromium=failed --status webkit=failed ...
 
@@ -25,7 +25,6 @@ import argparse, base64, glob, json, os, re, shutil, zipfile
 from datetime import datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, '..', 'runs')
 CW = os.path.expanduser('~/world/trees/root/src/areas/clients/checkout-web')
 STYLE = open(os.path.join(HERE, 'report-style.html')).read()
 ELL, TIMES = '…', '×'
@@ -51,7 +50,8 @@ for item in a.status:
     if s not in ('passed', 'failed'): raise SystemExit('status must be passed or failed: ' + item)
     statuses[b] = s
 meta = json.load(open(a.meta))
-run_dir = os.path.join(OUT, a.run)
+# Output lives next to the meta file, so one copy of this script serves every hunt folder.
+run_dir = os.path.join(os.path.dirname(os.path.abspath(a.meta)), a.run)
 # Previous layout kept one browser's files at the run root; clear those so the folder only holds the new layout.
 for junk in ['shots', 'resources', 'attachments', 'screencast', 'src', 'trace.zip', 'frames.json'] + [os.path.basename(x) for x in glob.glob(os.path.join(run_dir, '*.trace')) + glob.glob(os.path.join(run_dir, '*.network')) + glob.glob(os.path.join(run_dir, '*.stacks'))]:
     p = os.path.join(run_dir, junk)
