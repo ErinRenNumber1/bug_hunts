@@ -11,7 +11,7 @@
       "name": "pay-checkout-landed",
       "title": "A. Guest mode: straight into Pay checkout",
       "body": "Benchmark alias {email} submitted at the Shop Pay sign-in, no phone step. Shipping phone 4385559156 is typed into the address form later; it is never verified in part A.",
-      "request": "POST 200 server\\.shop\\.app/accounts/authentication/graphql",
+      "request": "POST 200 (server\\.)?shop\\.app/accounts/authentication/graphql",
       "offset": 1.5
     },
     {

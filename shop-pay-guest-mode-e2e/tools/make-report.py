@@ -116,22 +116,24 @@ def analyze(browser, trace, status):
             u = re.match(r'https?://([^/]+)(/[^?#]*)', url)
             host, path = (u.group(1), u.group(2)) if u else (url, '')
             op = re.search(r'operationName=([A-Za-z]+)', url)
-            reqs.append({'when': sn.get('startedDateTime', ''), 'method': rq['method'], 'status': sn['response']['status'],
+            reqs.append({'when': sn.get('startedDateTime', ''), 'mono': sn.get('_monotonicTime'), 'method': rq['method'], 'status': sn['response']['status'],
                          'host': host, 'path': path, 'op': op.group(1) if op else '',
                          'rid': hs.get('x-request-id') or hs.get('x-trace-id') or '', 'override': hs.get('x-verdict-overrides-applied', '')})
-    reqs.sort(key=lambda r: r['when'])
+    # _monotonicTime shares the screencast clock, so request rows and stills line up exactly; wall clock is the fallback.
+    reqs.sort(key=lambda r: (r['mono'] if r['mono'] is not None else 0, r['when']))
     first_when = reqs[0]['when'] if reqs else ''
-    def rel_when(w):
-        try: return (datetime.fromisoformat(w.replace('Z', '+00:00')) - datetime.fromisoformat(first_when.replace('Z', '+00:00'))).total_seconds()
+    def rel_req(r):
+        if r.get('mono') is not None: return rel(r['mono'])
+        try: return (datetime.fromisoformat(r['when'].replace('Z', '+00:00')) - datetime.fromisoformat(first_when.replace('Z', '+00:00'))).total_seconds()
         except Exception: return 0.0
     seen, key_reqs = {}, []
     for r in reqs:
         k = (r['method'], r['host'], re.sub(r'/cn/[A-Za-z0-9_-]+', '/cn/_', r['path']), r['op'])
-        if k in seen and (r['op'] or rel_when(r['when']) - rel_when(seen[k]['last']) <= 1.0):
-            seen[k]['n'] += 1; seen[k]['last'] = r['when']
+        if k in seen and (r['op'] or rel_req(r) - rel_req(seen[k]['last']) <= 1.0):
+            seen[k]['n'] += 1; seen[k]['last'] = r
             if not seen[k]['rid'] and r['rid']: seen[k]['rid'] = r['rid']
             continue
-        r['n'] = 1; r['last'] = r['when']; seen[k] = r; key_reqs.append(r)
+        r['n'] = 1; r['last'] = r; seen[k] = r; key_reqs.append(r)
 
     storefront_tokens = sorted(set(re.findall(r'/checkouts?/(?:[0-9]+/)?cn/([A-Za-z0-9_-]{16,})', blob)))
     session_ids = sorted(set(re.findall(r'(?:checkout_token=|private_access_tokens\?id=|/shopify_pay/)([0-9a-f]{32})', blob)))
@@ -144,10 +146,10 @@ def analyze(browser, trace, status):
     short_path = lambda p: re.sub(r'/cn/([A-Za-z0-9_-]{6})[A-Za-z0-9_-]+', r'/cn/\1' + ELL, p)
     def req_row(r):
         return ('<tr%s><td class="num">%.1f</td><td>%s</td><td class="num">%s</td><td>%s%s%s</td><td class="rid">%s</td></tr>' % (
-            ' class="hl"' if r['override'] else '', rel_when(r['when']), r['method'], 'aborted' if r['status'] == -1 else r['status'],
+            ' class="hl"' if r['override'] else '', rel_req(r), r['method'], 'aborted' if r['status'] == -1 else r['status'],
             esc(r['host'] + short_path(r['path'])), ' <b>%s</b>' % r['op'] if r['op'] else '', ' <i>%s%d</i>' % (TIMES, r['n']) if r['n'] > 1 else '',
             (esc(r['rid']) + (' <b>override applied: %s</b>' % esc(r['override']) if r['override'] else '')) if r['rid'] else '<i>not exposed</i>'))
-    rows = [(rel_when(r['when']), 1, r) for r in key_reqs] + [(rel(ts), 0, None) for ts in navs]
+    rows = [(rel_req(r), 1, r) for r in key_reqs] + [(rel(ts), 0, None) for ts in navs]
     rows.sort(key=lambda x: (x[0], x[1]))
     req_rows = ''.join(req_row(x) if x is not None else '<tr class="nav"><td class="num">%.1f</td><td colspan="3"><i>test action: page.reload()</i></td><td></td></tr>' % t for t, _, x in rows)
     ids_block = ('<h2>Trace identifiers</h2>\n<dl class="meta">%s</dl>\n'
@@ -174,11 +176,10 @@ def analyze(browser, trace, status):
             hit = next(v for k, v in steps.items() if k.startswith(m['step']))
             t, fn = pick(rel(hit[1] or hit[0]))
         elif m.get('request'):
-            # Request clock and frame clock both start at the initial goto, close enough for a still.
             rx = re.compile(m['request'])
             hit = next((r for r in reqs if rx.search(('%s %s %s%s %s' % (r['method'], 'aborted' if r['status'] == -1 else r['status'], r['host'], r['path'], r['op'])).strip())), None)
             if hit is None: notes.append('%s: no request matched %r, fell back to t=%s' % (m['name'], m['request'], m.get('t', 0)))
-            t, fn = pick((rel_when(hit['when']) + m.get('offset', 0)) if hit else m.get('t', 0))
+            t, fn = pick((rel_req(hit) + m.get('offset', 0)) if hit else m.get('t', 0))
         elif m.get('nav') == 'reload' and navs:
             t, fn = pick(rel(navs[0]) + m.get('offset', 0))
         else:

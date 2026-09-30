@@ -9,11 +9,21 @@ in Pay checkout, with no phone entry and no SMS code.
 
 | Run | Store | Spec | Result | Report |
 | --- | --- | --- | --- | --- |
-| 1 | shoppaye2etesting | checkout-web `guest-mode.spec.ts` (tracked in World, not copied here) | passed | [runs/spec-run-1/report.html](runs/spec-run-1/report.html) |
-| 2 | lucasmrichtest | [specs/guest-mode-lucasmrichtest.spec.ts](specs/guest-mode-lucasmrichtest.spec.ts) | passed, 19.9s | [runs/spec-run-2/report.html](runs/spec-run-2/report.html) |
-| 3 | lucasmrichtest | [specs/guest-mode-lucasmrichtest-reload.spec.ts](specs/guest-mode-lucasmrichtest-reload.spec.ts) | passed, 22.0s | [runs/spec-run-3/report.html](runs/spec-run-3/report.html) |
-| 4 | lucasmrichtest, then reinis-test-store | [specs/guest-mode-lucasmrichtest-account-signin.spec.ts](specs/guest-mode-lucasmrichtest-account-signin.spec.ts) | passed, 38.9s (attempt 8; attempts 4 to 6 recorded the same behaviour as soft failures) | [runs/spec-run-4/report.html](runs/spec-run-4/report.html) |
+| 1 | shoppaye2etesting | checkout-web `guest-mode.spec.ts` (tracked in World, not copied here) | passed on Chromium in the morning; the four-browser rerun (chromium 22.5s, webkit 29.0s, firefox 28.8s, chrome 25.2s) placed the order on every browser but failed the final Remember Me assertion, see below | [runs/spec-run-1/report.html](runs/spec-run-1/report.html) |
+| 2 | lucasmrichtest | [specs/guest-mode-lucasmrichtest.spec.ts](specs/guest-mode-lucasmrichtest.spec.ts) | passed on Chromium in the morning (19.9s); the four-browser rerun (chromium 25.3s, webkit 27.1s, firefox 27.1s, chrome 23.6s) placed the order on every browser but failed the final Remember Me assertion | [runs/spec-run-2/report.html](runs/spec-run-2/report.html) |
+| 3 | lucasmrichtest | [specs/guest-mode-lucasmrichtest-reload.spec.ts](specs/guest-mode-lucasmrichtest-reload.spec.ts) | passed on Chromium in the morning (22.0s); the four-browser rerun (chromium 25.0s, webkit 27.2s, firefox 29.7s, chrome 23.9s) survived the reload and placed the order on every browser but failed the final Remember Me assertion | [runs/spec-run-3/report.html](runs/spec-run-3/report.html) |
+| 4 | lucasmrichtest, then reinis-test-store | [specs/guest-mode-lucasmrichtest-account-signin.spec.ts](specs/guest-mode-lucasmrichtest-account-signin.spec.ts) | passed on Chromium in the morning, 38.9s (attempt 8; attempts 4 to 6 recorded the same behaviour as soft failures); the four-browser rerun failed on every browser for timing reasons, not behaviour: chromium (3.3m) and firefox (3.3m) hit a 45s `page.goto` timeout, chrome (3.9m) did not reach the customer account page within 45s, webkit (26.6s) never saw the popup email field | [runs/spec-run-4/report.html](runs/spec-run-4/report.html) |
 | 5 | spi-high-aov | [specs/guest-mode-spi-high-aov.spec.ts](specs/guest-mode-spi-high-aov.spec.ts) | failed the same way on all four browsers: chromium 29.6s, webkit 41.0s, firefox 35.4s, chrome 28.4s (two earlier Chromium attempts failed the same way) | [runs/spec-run-5/report.html](runs/spec-run-5/report.html) |
+| control | spi-high-aov | [specs/guest-mode-spi-high-aov-control.spec.ts](specs/guest-mode-spi-high-aov-control.spec.ts) | failed the same way as run 5 on all four browsers: chromium 27.5s, webkit 32.2s, firefox 32.1s, chrome 27.5s | [runs/spec-run-control/report.html](runs/spec-run-control/report.html) |
+
+The four-browser rerun of runs 1 to 3 happened at about 18:09 UTC on 2026-09-30 through `tools/run-browsers.sh all`.
+On every browser the guest-mode buyer landed in Pay checkout after the email alone, filled the form and got an
+order confirmation, so the guest-mode behaviour itself held. The one assertion that failed is the last one:
+after the order, `POST <storefront>/shopify_pay/<checkout token>/remember_me` returned 200 with no
+`Set-Cookie` header, where the spec expects `_shopify_essential`. The same specs had passed that assertion on
+Chromium earlier the same day with checkout-web's base Playwright config. Whether that is a production change
+after about 16:00 UTC or a difference between the two configs is not yet known; the request IDs of the
+`remember_me` responses are in each report's request table.
 
 Run 3 reloads the page after landing in Pay checkout and asserts the buyer is still on `/shoppay`, on the
 same host, with the same email in the header, then completes the order. That proves the guest session is
@@ -40,8 +50,8 @@ Each report is one `report.html` per spec. A browser dropdown at the top switche
 browser; each section embeds eight stills from that browser's Playwright screencast, the storefront checkout
 token, the checkout session identifier, and the `x-request-id` of every key request, with the email-submit
 request that carried `X-Verdict-Overrides-Applied` highlighted. A summary table under the heading lists every
-browser's result, duration and checkout session identifier. Runs 1 to 4 were first recorded on Chromium only;
-their reports gain the other browsers when the spec is re-run through `tools/run-browsers.sh`.
+browser's result, duration and checkout session identifier. Every report now carries all four browsers from the 2026-09-30 rerun; the morning Chromium-only passes for
+runs 1 to 4 are recorded in the table above and in git history.
 
 ## Running a spec
 

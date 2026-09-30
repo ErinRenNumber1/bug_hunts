@@ -34,7 +34,7 @@
       "name": "email-submitted",
       "title": "Email submitted",
       "body": "Benchmark alias {email}, then Continue. This is the moment the treatment decision is made.",
-      "request": "POST 200 server\\.shop\\.app/accounts/authentication/graphql",
+      "request": "POST 200 (server\\.)?shop\\.app/accounts/authentication/graphql",
       "offset": 0.2
     },
     {
@@ -43,7 +43,7 @@
       "title": "Guest mode: straight into Pay checkout",
       "body": "No phone entry, no SMS code. The Pay checkout shows the buyer email in the header with an empty Canada shipping form. Same behaviour as on the E2E store.",
       "key": true,
-      "request": "POST 200 server\\.shop\\.app/accounts/authentication/graphql",
+      "request": "POST 200 (server\\.)?shop\\.app/accounts/authentication/graphql",
       "offset": 1.5
     },
     {

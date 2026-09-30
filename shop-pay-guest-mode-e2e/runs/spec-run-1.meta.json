@@ -34,7 +34,7 @@
       "name": "email-continue",
       "title": "Email submitted",
       "body": "Benchmark alias {email}, then \"Continue with shop\". This is the moment the treatment decision is made.",
-      "request": "POST 200 server\\.shop\\.app/accounts/authentication/graphql",
+      "request": "POST 200 (server\\.)?shop\\.app/accounts/authentication/graphql",
       "offset": 0.2
     },
     {
@@ -43,7 +43,7 @@
       "title": "Guest mode: straight into Pay checkout",
       "body": "No phone entry, no SMS code. The Pay checkout shows the buyer email in the header with empty shipping and phone fields. This is the new behaviour under treatment.",
       "key": true,
-      "request": "POST 200 server\\.shop\\.app/accounts/authentication/graphql",
+      "request": "POST 200 (server\\.)?shop\\.app/accounts/authentication/graphql",
       "offset": 1.5
     },
     {
