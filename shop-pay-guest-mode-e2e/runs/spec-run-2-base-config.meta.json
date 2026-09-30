@@ -1,0 +1,86 @@
+{
+  "title": "Guest Mode on lucasmrichtest",
+  "h1": "Shop Pay guest mode on lucasmrichtest, new buyer, treatment variant (base Playwright config, discriminator run)",
+  "subtitle": "Same spec as run 2, run by Erin on 2026-09-30 at about 18:19 UTC with checkout-web's own playwright.config.ts (project shop-pay) instead of the guest-mode config, to tell a production change from a config difference. It failed the same way: the order was placed, and the remember_me response carried no Set-Cookie. Frames from the Playwright trace of the rescripted spec, run from Erin's machine against the production bug-hunt store on 2026-09-29. Each frame is an unedited screencast still.",
+  "spec": "e2e/tests/shop-pay/shared/guest-mode-lucasmrichtest.spec.ts:27 (untracked)",
+  "store": "lucasmrichtest.myshopify.com · shop 60529737962 · primary domain polly-lucas.myshopify.com",
+  "override": "EXP_OVERRIDES e_ac6fae2281b0e908985ecf9c8069ba5d=treatment",
+  "moments": [
+    {
+      "t": 2.5,
+      "name": "checkout-landing",
+      "title": "Checkout opens",
+      "body": "Cart permalink on lucasmrichtest.myshopify.com (Bud &amp; Bloom theme), one Snake Plant Laurentii at CAD 59. No storefront password, so the spec goes straight to checkout.",
+      "request": "GET 200 [a-z0-9-]+\\.myshopify\\.com/checkouts/cn/",
+      "offset": 0.8
+    },
+    {
+      "t": 5.2,
+      "name": "shop-pay-clicked",
+      "title": "Shop Pay button clicked",
+      "body": "The express-checkout Shop Pay button opens the Accounts sign-in iframe inside the merchant checkout.",
+      "request": "GET 302 shop\\.app/oauth/authorize"
+    },
+    {
+      "t": 7.6,
+      "name": "sign-in-screen",
+      "title": "Sign-in screen",
+      "body": "\"Sign in / Or create an account\" renders in the iframe. The input field is still painting in this still.",
+      "request": "GET 200 shop\\.app/accounts/login/embedded",
+      "offset": 1.0
+    },
+    {
+      "t": 8.0,
+      "name": "email-submitted",
+      "title": "Email submitted",
+      "body": "Benchmark alias {email}, then Continue. This is the moment the treatment decision is made.",
+      "request": "POST 200 (server\\.)?shop\\.app/accounts/authentication/graphql",
+      "offset": 0.2
+    },
+    {
+      "t": 9.8,
+      "name": "pay-checkout-landed",
+      "title": "Guest mode: straight into Pay checkout",
+      "body": "No phone entry, no SMS code. The Pay checkout shows the buyer email in the header with an empty Canada shipping form. Same behaviour as on the E2E store.",
+      "key": true,
+      "request": "POST 200 (server\\.)?shop\\.app/accounts/authentication/graphql",
+      "offset": 1.5
+    },
+    {
+      "t": 12.0,
+      "name": "form-filled",
+      "title": "Address, phone and card filled",
+      "body": "Default Canadian address (Toronto), a 438555 benchmark phone, and a test card. Card and address are vaulted only at Pay now.",
+      "request": "POST 200 shop\\.app/pay/users/graphql CreditCardCreate",
+      "offset": 0.3
+    },
+    {
+      "t": 15.0,
+      "name": "processing",
+      "title": "Pay now processing",
+      "body": "Order submission in flight.",
+      "request": "SubmitForCompletion",
+      "offset": 0.5
+    },
+    {
+      "t": 19.1,
+      "name": "order-confirmed",
+      "title": "Order confirmed",
+      "body": "Thank-you page: \"Thank you, Alice!\", confirmation {order}, CAD $59.00, shipping free. The spec asserts \"Order was completed with Shop Pay\".",
+      "request": "GET 200 .*/checkouts/cn/.*/processing",
+      "offset": 1.5
+    }
+  ],
+  "proves": [
+    "The same spec works on a bug-hunt store by swapping only the store config: baseURL, shop id, variant, no password, CAD, Canadian address.",
+    "The benchmark test identity works on any store. The check is on the email pattern (app/models/benchmarkable.rb), not the shop, so the fixed email code and simulated SMS apply here too.",
+    "Under treatment a brand-new email lands in Pay checkout with no phone entry and no SMS code (frame at 9.8 s), matching the E2E-store run.",
+    "Address, card, Pay now and order confirmation work end to end on a store outside Core's E2E allowlist, with real production captcha behaviour."
+  ],
+  "caveats": [
+    "Only the happy path, entered through the express-wallet Shop Pay button. The bug-hunt doc lists this store under \"direct payment\"; that entry point is not exercised here.",
+    "The store is on pod 233. The e2e framework warns that E2E shops must be on pod 21 and says the warning will become an error, so this spec should stay local, not be committed.",
+    "Benchmark identities get a fixed email code and simulated SMS, so real OTP delivery is out of scope.",
+    "One run, one browser. No concurrency or second-device behaviour exercised."
+  ]
+}

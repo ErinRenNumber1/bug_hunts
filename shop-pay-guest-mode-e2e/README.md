@@ -21,9 +21,13 @@ On every browser the guest-mode buyer landed in Pay checkout after the email alo
 order confirmation, so the guest-mode behaviour itself held. The one assertion that failed is the last one:
 after the order, `POST <storefront>/shopify_pay/<checkout token>/remember_me` returned 200 with no
 `Set-Cookie` header, where the spec expects `_shopify_essential`. The same specs had passed that assertion on
-Chromium earlier the same day with checkout-web's base Playwright config. Whether that is a production change
-after about 16:00 UTC or a difference between the two configs is not yet known; the request IDs of the
-`remember_me` responses are in each report's request table.
+Chromium at about 02:18 UTC the same day (the request-id suffix is the epoch second). A discriminator run of
+spec 2 at about 18:59 UTC with checkout-web's own `playwright.config.ts`, recorded in
+[runs/spec-run-2-base-config/report.html](runs/spec-run-2-base-config/report.html), failed the same way, so the
+config is not the cause and the behaviour changed in production between 02:18 and 18:10 UTC. The request IDs
+of the `remember_me` responses are in each report's request table. In Core, the cookie is written by
+`ShopifyPay::OptInController#remember_me` through `Checkouts::One::Receipt#set_shop_pay_cookie`; neither file,
+nor the session-data persistence they call, has a commit since 2026-09-29, so the change is not in that code.
 
 Run 3 reloads the page after landing in Pay checkout and asserts the buyer is still on `/shoppay`, on the
 same host, with the same email in the header, then completes the order. That proves the guest session is
